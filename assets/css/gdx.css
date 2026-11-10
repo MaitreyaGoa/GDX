@@ -413,3 +413,21 @@ body.admin .a-tab.active { border-bottom-color: var(--lime); color: #fff; }
 body.admin .a-badge { background: var(--lime); color: var(--on-lime); }
 body.admin .login-wrap { background: radial-gradient(120% 90% at 50% 0%, #1C2412 0%, #000 70%); }
 body.admin .a-header .logo .accent { color: var(--lime); }
+
+/* seller portal login / apply */
+body.admin .login-card .logo-img, body.admin .a-bar .logo-img { background: transparent; padding: 0; }
+body.admin .login-card { width: min(100%, 420px); background: #fff !important; }
+.pw-login { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+.pw-login summary { cursor: pointer; color: var(--muted); font-weight: 600; }
+.pw-login form { margin-top: 14px; }
+.ap-status { padding: 16px; border-radius: 16px; margin-bottom: 16px; background: #F4F7EC; box-shadow: 0 0 0 1px rgba(13,16,8,.08) inset; }
+.ap-status h2 { margin: 0 0 6px; font-size: 20px; letter-spacing: -.02em; }
+.ap-status p { margin: 0 0 6px; font-size: 14px; color: var(--muted); }
+.ap-status.wait { background: #FFF8E6; box-shadow: 0 0 0 1px #F2DFAF inset; }
+.ap-status.no { background: #FDEFEF; box-shadow: 0 0 0 1px #F4CACA inset; }
+.ap-status .big { font-size: 30px; }
+.a-apps { display: grid; gap: 10px; margin-bottom: 18px; }
+.a-app { display: grid; gap: 8px; padding: 14px 16px; border-radius: 16px; background: #FFFBEA; box-shadow: 0 0 0 1px #F2DFAF inset; }
+.a-app .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.a-app h3 { margin: 0; font-size: 16px; }
+.pill.ok-pill { background: #E6F5D6; color: #3A5C00; }
