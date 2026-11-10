@@ -17,8 +17,8 @@ window.MHC_CONFIG = {
   CONTACT_PHONE:  '7358425108',
   // Footer contacts (name + 10-digit WhatsApp)
   CONTACTS: [
-    { name: 'Harish',   phone: '7720876801' },
-    { name: 'Maitreya', phone: '7358425108' }
+    { name: 'Harish',   phone: '7720876801', facebook: 'https://www.facebook.com/profile.php?id=100007156157694' },
+    { name: 'Maitreya', phone: '7358425108', facebook: 'https://www.facebook.com/MaitreyaHinde/' }
   ],
   WHATSAPP_GROUP: 'https://chat.whatsapp.com/BfcQaxJJqoqALCqhTFt1DB',
   FACEBOOK_PAGE:  '',

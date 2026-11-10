@@ -299,7 +299,8 @@
     const nice = p => String(p).replace(/(\d{5})(\d{5})/, '$1 $2');
     const contacts = (C.CONTACTS || []).map(c => `
             <div class="gx-person">
-              <div><b>${esc(c.name)}</b><span class="num">+91 ${esc(nice(c.phone))}</span></div>
+              <div><b>${esc(c.name)}</b><span class="num">+91 ${esc(nice(c.phone))}</span>
+                ${c.facebook ? `<a class="fb-link gx-fb" href="${esc(c.facebook)}" target="_blank" rel="noopener">${FB}Facebook</a>` : ''}</div>
               <div class="acts">
                 <a class="wa" href="${esc(waLink('91' + c.phone, `Hi ${c.name}, I have a query about GDX. `))}" target="_blank" rel="noopener" aria-label="WhatsApp ${esc(c.name)}" title="WhatsApp ${esc(c.name)}">💬</a>
                 <a href="tel:+91${esc(c.phone)}" aria-label="Call ${esc(c.name)}" title="Call ${esc(c.name)}">📞</a>
@@ -353,7 +354,6 @@
           </div>
         </div>
         <div class="container footer-credits">
-          <span>Founder: ${C.FOUNDER_URL ? `<a class="fb-inline" href="${esc(C.FOUNDER_URL)}" target="_blank" rel="noopener" title="${esc(C.FOUNDER_NAME)} on Facebook">${FB}${esc(C.FOUNDER_NAME)}</a>` : esc(C.FOUNDER_NAME || '')}</span>
           <span>Developed by ${C.DESIGNER_URL ? `<a class="fb-inline" href="${esc(C.DESIGNER_URL)}" target="_blank" rel="noopener" title="${esc(C.DESIGNER_NAME)} on Facebook">${FB}${esc(C.DESIGNER_NAME)}</a>` : esc(C.DESIGNER_NAME || '')}</span>
         </div>
         <div class="container footer-legal">© ${new Date().getFullYear()} ${esc(C.STORE_FULL || C.STORE_NAME)}, ${esc(C.STORE_LOCATION || 'Goa')}. Hot Wheels and other brand names are trademarks of their owners; GDX is an independent community marketplace. · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></div>
