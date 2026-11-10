@@ -74,7 +74,7 @@
 <script>
   (function () {
     const ppl = document.getElementById('people');
-    ppl.innerHTML = (MHC.C.CONTACTS || []).map(c => `<div class="gx-person"><div><b>${MHC.esc(c.name)}</b><span class="num">+91 ${MHC.esc(String(c.phone).replace(/(\d{5})(\d{5})/, '$1 $2'))}</span></div>
+    ppl.innerHTML = (MHC.C.CONTACTS || []).map(c => `<div class="gx-person"><div><b>${MHC.esc(c.name)}</b><span class="num">+91 ${MHC.esc(String(c.phone).replace(/(\d{5})(\d{5})/, '$1 $2'))}</span>${c.facebook ? `<a class="fb-link gx-fb" href="${MHC.esc(c.facebook)}" target="_blank" rel="noopener">Facebook</a>` : ''}</div>
       <div class="acts"><a class="wa" href="${MHC.esc(MHC.waLink('91' + c.phone, 'Hi ' + c.name + ', I have a query about GDX. '))}" target="_blank" rel="noopener" aria-label="WhatsApp ${MHC.esc(c.name)}">💬</a><a href="tel:+91${MHC.esc(c.phone)}" aria-label="Call ${MHC.esc(c.name)}">📞</a></div></div>`).join('');
     const C = MHC.C, g = document.getElementById('groupBtn');
     if (C.WHATSAPP_GROUP) g.href = C.WHATSAPP_GROUP; else g.closest('section').hidden = true;
