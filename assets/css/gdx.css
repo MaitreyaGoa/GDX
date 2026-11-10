@@ -578,3 +578,6 @@ body:has(.ad-sticky) .wa-float { bottom: 92px; }
 .nav-dot { position: absolute; top: 1px; right: 2px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; font-size: 10px; font-weight: 800; line-height: 16px; text-align: center; color: #fff; box-shadow: 0 0 0 2px var(--bg); }
 .nav-dot.out { background: #EF4444; animation: gxBlink 1.4s ease-in-out infinite; }
 .nav-dot.lead { min-width: 9px; width: 9px; height: 9px; padding: 0; top: 5px; right: 5px; background: #22C55E; }
+.gx-person .num { display: block; }
+.gx-fb { margin-top: 3px; font-size: 12.5px; color: var(--muted); }
+.gx-fb:hover { color: #1877F2 !important; }
