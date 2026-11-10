@@ -46,7 +46,7 @@
   }
   async function route() {
     const r = await loadProfile();
-    if (r === 'app') return showApp();
+    if (r === 'app') return mustChange() ? showPwView('first') : showApp();
     if (r === 'apply') return showApply();
     await sb.auth.signOut();
     showLogin('This account has no seller access. Sellers sign in with Google.');
@@ -57,7 +57,10 @@
     if (recoveryMode) { if (data.session) showPwView('recovery'); else showLogin(); return; }
     if (data.session) route(); else showLogin(googleErr);
   }
-  const mustChange = () => false;   // sellers sign in with Google — no default passwords any more
+  // Admins made with a one-time password (e.g. Harish / 1234) must set their own first
+  const mustChange = () => !!(state.profile && state.profile.must_change_password);
+  // "Harish" → harish@admin.gdxgarage.com (username logins for admins)
+  const loginEmail = v => { v = String(v || '').trim().toLowerCase(); return v.includes('@') ? v : v.replace(/[^a-z0-9._-]/g, '') + '@admin.gdxgarage.com'; };
   // Google sign-in returns here with ?code=… (or ?error=…): tidy the address bar
   const googleErr = new URLSearchParams(location.search).get('error_description');
   function cleanUrl() {
@@ -125,7 +128,7 @@
     $('pwTitle').textContent = recoveryMode ? 'Choose a new password' : 'Set your own password';
     $('pwLead').textContent = recoveryMode
       ? 'Enter a new password for your account.'
-      : "You're using the default password. Choose a new one to continue — you'll use it to log in from any device.";
+      : `Welcome${state.profile && state.profile.admin_name ? ', ' + state.profile.admin_name : ''}! You logged in with a one-time password. Choose your own to continue — you'll use it from any device.`;
     $('pwError').hidden = true; $('pwNew').value = ''; $('pwNew2').value = '';
     $('pwNew').focus();
   }
@@ -144,7 +147,7 @@
     const show = m => { err.textContent = m; err.hidden = false; };
     if (a1.length < 8) return show('Use at least 8 characters.');
     if (a1 !== a2) return show('The two passwords don\'t match.');
-    if (a1.toLowerCase() === String(C.DEFAULT_SELLER_PASSWORD || 'abcd').toLowerCase()) return show('Choose a password different from the default.');
+    if (['1234', '12345678', 'abcd', 'password'].includes(a1.toLowerCase())) return show('Choose a stronger password.');
     const btn = $('pwBtn'); btn.disabled = true; btn.textContent = 'Saving…';
     const error = await setPassword(a1);
     btn.disabled = false; btn.textContent = 'Save password & continue';
@@ -164,7 +167,11 @@
   }
   function applyRole() {
     document.querySelectorAll('[data-role="admin"]').forEach(el => { el.hidden = !isMaster(); });
-    $('roleLabel').textContent = isMaster() ? 'Master admin' : (state.me ? state.me.shop_name : '');
+    const p = state.profile || {};
+    $('roleLabel').textContent = isMaster() ? `${p.is_owner ? 'Owner' : 'Admin'}${p.admin_name ? ' · ' + p.admin_name : ''}` : (state.me ? state.me.shop_name : '');
+    // an admin without a shop of their own (e.g. Harish) doesn't need the My shop tab
+    const shopTab = document.querySelector('.a-tab[data-tab="shop"]');
+    if (shopTab) shopTab.hidden = isMaster() && !state.me;
     document.body.classList.toggle('is-seller', !isMaster());
   }
   const shopIncomplete = () => !isMaster() && state.me && (!state.me.whatsapp || !state.me.upi_id);
@@ -182,15 +189,15 @@
   async function showApp() {
     $('loginView').hidden = true; $('pwView').hidden = true; $('applyView').hidden = true; $('appView').hidden = false;
     applyRole();
-    $('passwordForm').hidden = state.provider !== 'email';   // only the master's email login has a password
+    $('passwordForm').hidden = state.provider !== 'email';   // only username / email logins have a password
+    // admins without a shop (e.g. Harish) change their password in Settings
+    if (isMaster() && !state.me) $('tab-settings').appendChild($('passwordForm'));
     await loadSellers();
     loadOrders(); loadProducts(); loadShop();
     if (isMaster()) { loadSettings(); loadCommunity(); }
     if (isMaster() && new URLSearchParams(location.search).get('next') === 'giveaway') { location.href = 'giveaway.html'; return; }
     applySetupGate();
-    if (!state.me) $('shopError').textContent = isMaster()
-      ? 'Run supabase/2-gdx-all-phases.sql in Supabase to set up your shop and sellers.' : '';
-    $('shopError').hidden = !!state.me;
+    $('shopError').hidden = true;
     clearInterval(state.poll);
     state.poll = setInterval(() => { if (!document.hidden) loadOrders(true); }, 60000);
   }
@@ -199,8 +206,8 @@
     e.preventDefault();
     const btn = $('loginBtn'), err = $('loginError');
     err.hidden = true; btn.disabled = true; btn.textContent = 'Logging in…';
-    const { error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
-    if (!error && await loadProfile() === 'app') { $('password').value = ''; showApp(); }
+    const { error } = await sb.auth.signInWithPassword({ email: loginEmail($('email').value), password: $('password').value });
+    if (!error && await loadProfile() === 'app') { $('password').value = ''; mustChange() ? showPwView('first') : showApp(); }
     else {
       if (!error) await sb.auth.signOut();
       err.textContent = error ? 'Wrong email or password.' : 'Email & password is only for the master admin. Sellers: use Continue with Google.';
@@ -659,7 +666,15 @@
 
   // ------------------------------------------------------------------ SETTINGS (master)
   const SFIELDS = ['store_name', 'whatsapp_number'];
+  async function loadAdmins() {
+    const { data, error } = await sb.rpc('admin_list_admins');
+    $('adminList').innerHTML = error ? `<p class="muted small">${esc(errText(error))}</p>` : (data || []).map(a => `
+      <div class="a-seller"><div class="a-seller-info">
+        <b>${esc(a.display_name)} <span class="pill ${a.is_owner ? 'ok-pill' : 'cat'}">${a.is_owner ? 'Owner' : 'Admin'}</span>${a.must_change_password ? ' <span class="pill warn">Hasn\'t set own password yet</span>' : ''}</b>
+        <span class="small muted">Login: ${esc(a.login)}</span></div></div>`).join('');
+  }
   async function loadSettings() {
+    loadAdmins();
     const { data, error } = await sb.from('settings').select('*').eq('id', 1).single();
     if (error) { toast(errText(error), 'warn'); return; }
     state.settings = data;
@@ -772,6 +787,7 @@
           <b>${esc(s.shop_name)}${s.user_id === state.uid ? ' <span class="pill cat">You</span>' : ''}${PILL[s.status] || (s.is_active ? '' : ' <span class="pill bad">Paused</span>')}</b>
           <span class="small">${s.whatsapp ? `💬 <a href="https://wa.me/91${esc(s.whatsapp)}" target="_blank" rel="noopener">${esc(s.whatsapp)}</a>` : '<span class="bad">No WhatsApp yet</span>'}
             · ${s.upi_id ? 'UPI ' + esc(s.upi_id) : '<span class="bad">No UPI yet</span>'}</span>
+          ${s.reviewed_by ? `<span class="small">${s.status === 'rejected' ? '✕ Rejected' : '✓ Approved'} by <b>${esc(s.reviewed_by)}</b>${s.reviewed_at ? ' · ' + new Date(s.reviewed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>` : ''}
           <span class="small muted">${s.login_email ? '🔑 ' + esc(s.login_email) + (s.user_id ? '' : ' <span class="pill warn">Not signed in yet</span>') : '<span class="warn">No Google account linked</span>'}
             · ${nCars[s.id] || 0} cars · ${nPend[s.id] || 0} pending orders</span>
         </div>
@@ -879,7 +895,7 @@
     const a = $('newPass').value, b = $('newPass2').value;
     if (a.length < 8) { toast('Use at least 8 characters', 'warn'); return; }
     if (a !== b) { toast('Passwords do not match', 'warn'); return; }
-    if (a.toLowerCase() === String(C.DEFAULT_SELLER_PASSWORD || 'abcd').toLowerCase()) { toast('Choose a password different from the default', 'warn'); return; }
+    if (['1234', '12345678', 'abcd', 'password'].includes(a.toLowerCase())) { toast('Choose a stronger password', 'warn'); return; }
     const error = await setPassword(a);
     if (error) { toast(errText(error), 'warn'); return; }
     $('newPass').value = $('newPass2').value = '';
