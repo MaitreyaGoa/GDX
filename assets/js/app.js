@@ -349,7 +349,7 @@
             <a href="track.html">Track order</a>
             <a href="shipping.html">Shipping &amp; returns</a>
             <a href="contact.html">Contact</a>
-            <a href="admin.html">Seller login</a>
+            <a href="admin.html">Sell on GDX · Seller login</a>
           </div>
         </div>
         <div class="container footer-credits">

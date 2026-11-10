@@ -6,7 +6,7 @@
   const sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY, {
     // Login lasts only while the browser is open (sessionStorage), never saved long-term
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true,
-            storage: window.sessionStorage, storageKey: 'mhc-admin-auth' }
+            flowType: 'pkce', storage: window.sessionStorage, storageKey: 'mhc-admin-auth' }
   });
   try { localStorage.removeItem('mhc-admin-auth'); } catch (e) {}   // remove logins saved by older versions
   const $ = id => document.getElementById(id);
@@ -24,23 +24,100 @@
 
   // ------------------------------------------------------------------ AUTH
   const isMaster = () => state.role === 'admin';
+  // Returns 'app' (admin / approved seller), 'apply' (Google user: apply or waiting), or false
   async function loadProfile() {
     const { data: u } = await sb.auth.getUser();
-    state.uid = u && u.user ? u.user.id : null;
-    const { data, error } = await sb.rpc('my_profile');
-    if (!error && data && data.role) { state.role = data.role; state.me = data.seller || null; return true; }
-    // before the multi-seller update is installed: fall back to the old admin check
-    const old = await sb.rpc('is_admin');
-    if (!old.error && old.data === true) { state.role = 'admin'; state.me = null; return true; }
-    state.role = null; state.me = null; return false;
+    const user = u && u.user;
+    state.uid = user ? user.id : null;
+    state.provider = user ? ((user.app_metadata || {}).provider || '') : '';
+    state.email = user ? user.email : '';
+    let { data, error } = await sb.rpc('seller_login');               // links a pre-approved Gmail
+    if (error) ({ data, error } = await sb.rpc('my_profile'));
+    state.profile = data || {};
+    state.me = (data && data.seller) || null;
+    state.role = (data && data.role) || null;
+    if (state.role === 'admin' || state.role === 'seller') return 'app';
+    if (state.provider === 'google') return 'apply';
+    if (!data) {   // very old database: fall back to the admin check
+      const old = await sb.rpc('is_admin');
+      if (!old.error && old.data === true) { state.role = 'admin'; return 'app'; }
+    }
+    return false;
+  }
+  async function route() {
+    const r = await loadProfile();
+    if (r === 'app') return showApp();
+    if (r === 'apply') return showApply();
+    await sb.auth.signOut();
+    showLogin('This account has no seller access. Sellers sign in with Google.');
   }
   async function boot() {
     const { data } = await sb.auth.getSession();
+    cleanUrl();
     if (recoveryMode) { if (data.session) showPwView('recovery'); else showLogin(); return; }
-    if (data.session && await loadProfile()) mustChange() ? showPwView('first') : showApp();
-    else { if (data.session) await sb.auth.signOut(); showLogin(); }
+    if (data.session) route(); else showLogin(googleErr);
   }
-  const mustChange = () => !!(state.me && state.me.must_change_password && !isMaster());
+  const mustChange = () => false;   // sellers sign in with Google — no default passwords any more
+  // Google sign-in returns here with ?code=… (or ?error=…): tidy the address bar
+  const googleErr = new URLSearchParams(location.search).get('error_description');
+  function cleanUrl() {
+    const u = new URL(location.href); let changed = false;
+    ['code', 'error', 'error_code', 'error_description', 'state'].forEach(k => { if (u.searchParams.has(k)) { u.searchParams.delete(k); changed = true; } });
+    if (changed) try { history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {}
+  }
+  $('googleBtn').onclick = async () => {
+    const btn = $('googleBtn'); btn.disabled = true;
+    const next = new URLSearchParams(location.search).get('next');
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: {
+      redirectTo: location.origin + location.pathname + (next ? '?next=' + encodeURIComponent(next) : ''),
+      queryParams: { prompt: 'select_account' } } });
+    if (error) { $('googleError').textContent = "Couldn't open Google sign-in: " + errText(error); $('googleError').hidden = false; btn.disabled = false; }
+  };
+
+  // ------------------------------------------------------------------ APPLY TO SELL
+  function showApply() {
+    $('loginView').hidden = true; $('pwView').hidden = true; $('appView').hidden = true; $('applyView').hidden = false;
+    const m = state.me, role = state.role, box = $('applyStatus'), form = $('applyForm');
+    $('applyWho').textContent = 'Signed in as ' + (state.email || '');
+    const when = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+    if (role === 'pending') {
+      box.innerHTML = `<div class="ap-status wait"><div class="big">⏳</div><h2>Application received</h2>
+        <p><b>${esc(m.shop_name)}</b> · sent ${when(m.applied_at)}</p>
+        <p>The GDX admin will review it and approve you, usually within a day. Come back here and sign in with Google once approved.</p></div>`;
+      form.hidden = false; $('applyTitle').textContent = 'Update your application'; $('applyBtn').textContent = 'Update application';
+    } else if (role === 'rejected') {
+      box.innerHTML = `<div class="ap-status no"><div class="big">✋</div><h2>Not approved this time</h2>
+        ${m.review_note ? `<p>Note from the admin: ${esc(m.review_note)}</p>` : ''}
+        <p>You can update your details and apply again.</p></div>`;
+      form.hidden = false; $('applyTitle').textContent = 'Apply again'; $('applyBtn').textContent = 'Send application';
+    } else if (role === 'paused') {
+      box.innerHTML = `<div class="ap-status no"><div class="big">⏸️</div><h2>Your shop is paused</h2>
+        <p>Please contact the GDX admin on WhatsApp to switch it back on.</p></div>`;
+      form.hidden = true;
+    } else {
+      box.innerHTML = '';
+      form.hidden = false; $('applyTitle').textContent = 'Apply to sell on GDX'; $('applyBtn').textContent = 'Send application';
+    }
+    if (m) { $('ap_shop').value = m.shop_name || ''; $('ap_whatsapp').value = m.whatsapp || ''; $('ap_area').value = m.area || ''; $('ap_about').value = m.about || ''; }
+    else if (!$('ap_shop').value) { $('ap_shop').value = ''; }
+  }
+  $('applyForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const err = $('applyError'), show = (m, f) => { err.textContent = m; err.hidden = false; if (f) $(f).focus(); };
+    err.hidden = true;
+    const shop = $('ap_shop').value.trim(), wa = $('ap_whatsapp').value.trim();
+    if (shop.length < 3) return show('Enter your shop name.', 'ap_shop');
+    if (!validWa(wa)) return show('Enter a valid 10-digit WhatsApp number — the admin and buyers contact you on it.', 'ap_whatsapp');
+    const btn = $('applyBtn'); btn.disabled = true;
+    const { data, error } = await sb.rpc('apply_as_seller', { p_shop: shop, p_whatsapp: wa,
+      p_area: $('ap_area').value.trim() || null, p_about: $('ap_about').value.trim() || null });
+    btn.disabled = false;
+    if (error) return show(errText(error));
+    state.profile = data; state.me = data.seller; state.role = data.role;
+    toast('Application sent ✓', 'ok');
+    showApply();
+  });
+  $('applyLogout').onclick = async () => { await sb.auth.signOut(); showLogin(); };
   let recoveryMode = false;
   function showPwView(mode) {
     recoveryMode = mode === 'recovery';
@@ -74,15 +151,16 @@
     if (error) return show(errText(error));
     $('pwView').hidden = true;
     toast('Password saved', 'ok');
-    if (await loadProfile()) showApp(); else showLogin();
+    route();
   });
   $('pwLogout').onclick = async () => { await sb.auth.signOut(); $('pwView').hidden = true; showLogin(); };
 
-  function showLogin() {
-    $('pwView').hidden = true;
+  function showLogin(msg) {
+    $('pwView').hidden = true; $('applyView').hidden = true;
     $('appView').hidden = true; $('loginView').hidden = false;
     clearInterval(state.poll);
-    $('email').focus();
+    $('googleBtn').disabled = false;
+    $('googleError').textContent = msg || ''; $('googleError').hidden = !msg;
   }
   function applyRole() {
     document.querySelectorAll('[data-role="admin"]').forEach(el => { el.hidden = !isMaster(); });
@@ -102,8 +180,9 @@
     }
   }
   async function showApp() {
-    $('loginView').hidden = true; $('pwView').hidden = true; $('appView').hidden = false;
+    $('loginView').hidden = true; $('pwView').hidden = true; $('applyView').hidden = true; $('appView').hidden = false;
     applyRole();
+    $('passwordForm').hidden = state.provider !== 'email';   // only the master's email login has a password
     await loadSellers();
     loadOrders(); loadProducts(); loadShop();
     if (isMaster()) { loadSettings(); loadCommunity(); }
@@ -121,15 +200,16 @@
     const btn = $('loginBtn'), err = $('loginError');
     err.hidden = true; btn.disabled = true; btn.textContent = 'Logging in…';
     const { error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
-    if (!error && await loadProfile()) { $('password').value = ''; mustChange() ? showPwView('first') : showApp(); }
+    if (!error && await loadProfile() === 'app') { $('password').value = ''; showApp(); }
     else {
       if (!error) await sb.auth.signOut();
-      err.textContent = error ? 'Wrong email or password.' : 'This account has no shop access yet, or it is paused. Contact the store admin.';
+      err.textContent = error ? 'Wrong email or password.' : 'Email & password is only for the master admin. Sellers: use Continue with Google.';
       err.hidden = false;
     }
     btn.disabled = false; btn.textContent = 'Log in';
   });
   $('logoutBtn').onclick = async () => { await sb.auth.signOut(); showLogin(); };
+  $('pwLogin').addEventListener('toggle', () => { if ($('pwLogin').open) $('email').focus(); });
   $('forgotBtn').onclick = () => { $('forgotBox').hidden = !$('forgotBox').hidden; };
   $('sendResetBtn').onclick = async () => {
     const email = $('email').value.trim();
@@ -148,7 +228,7 @@
       const { data, error } = await sb.rpc('admin_list_sellers');
       state.sellers = error ? [] : (data || []);
     } else state.sellers = state.me ? [state.me] : [];
-    const opts = state.sellers.map(s => `<option value="${esc(s.id)}">${esc(s.shop_name)}${s.is_active ? '' : ' (paused)'}</option>`).join('');
+    const opts = state.sellers.filter(s => !s.status || s.status === 'approved').map(s => `<option value="${esc(s.id)}">${esc(s.shop_name)}${s.is_active ? '' : ' (paused)'}</option>`).join('');
     $('orderSeller').innerHTML = '<option value="">All sellers</option>' + opts;
     $('productSeller').innerHTML = '<option value="">All sellers</option>' + opts;
     $('orderSeller').value = state.sellerFilter; $('productSeller').value = state.productSellerFilter;
@@ -663,8 +743,8 @@
   };
 
   // ------------------------------------------------------------------ SELLERS TAB (master)
-  const MAX_SELLERS = Number(C.MAX_SELLERS || 5);
   const others = () => state.sellers.filter(s => s.user_id !== state.uid);
+  const PILL = { pending: '<span class="pill warn">Waiting for approval</span>', rejected: '<span class="pill bad">Rejected</span>' };
   async function renderSellers() {
     const [cars, pend] = await Promise.all([
       sb.from('products').select('seller_id').limit(10000),
@@ -672,24 +752,51 @@
     ]);
     const tally = rows => (rows.data || []).reduce((m, r) => (m[r.seller_id] = (m[r.seller_id] || 0) + 1, m), {});
     const nCars = tally(cars), nPend = tally(pend);
-    const n = others().length;
-    $('sellerStats').textContent = `${n} of ${MAX_SELLERS} sellers · plus your own shop`;
-    $('addSeller').disabled = n >= MAX_SELLERS;
-    $('sellerList').innerHTML = state.sellers.length ? state.sellers.map(s => `
+    const apps = state.sellers.filter(s => s.status === 'pending');
+    const shops = state.sellers.filter(s => s.status !== 'pending');
+    const live = shops.filter(s => s.is_active && s.user_id !== state.uid).length;
+    $('sellerStats').textContent = `${live} active seller${live === 1 ? '' : 's'} · plus your own shop${apps.length ? ` · ${apps.length} waiting for approval` : ''}`;
+    $('addSeller').disabled = false;
+    $('applyBadge').textContent = apps.length; $('applyBadge').hidden = !apps.length;
+    const appsHtml = apps.length ? `<div class="a-apps"><h3 class="panel-title" style="margin:0">New seller applications</h3>${apps.map(s => `
+      <div class="a-app" data-id="${esc(s.id)}">
+        <h3>${esc(s.shop_name)} ${PILL.pending}</h3>
+        <span class="small">🔑 ${esc(s.login_email || '')} · 💬 <a href="https://wa.me/91${esc(s.whatsapp || '')}" target="_blank" rel="noopener">${esc(s.whatsapp || '')}</a>${s.area ? ' · 📍 ' + esc(s.area) : ''}</span>
+        ${s.about ? `<span class="small muted">${esc(s.about)}</span>` : ''}
+        <span class="small muted">Applied ${new Date(s.applied_at || s.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>
+        <div class="acts"><button class="btn btn-ok sm" data-review="approve">✓ Approve</button><button class="btn btn-ghost sm danger" data-review="reject">✕ Reject</button></div>
+      </div>`).join('')}</div>` : '';
+    $('sellerList').innerHTML = appsHtml + (shops.length ? shops.map(s => `
       <div class="a-seller${s.is_active ? '' : ' hidden-prod'}" data-id="${esc(s.id)}">
         <div class="a-seller-info">
-          <b>${esc(s.shop_name)}${s.user_id === state.uid ? ' <span class="pill cat">You</span>' : ''}${s.is_active ? '' : ' <span class="pill bad">Paused</span>'}</b>
+          <b>${esc(s.shop_name)}${s.user_id === state.uid ? ' <span class="pill cat">You</span>' : ''}${PILL[s.status] || (s.is_active ? '' : ' <span class="pill bad">Paused</span>')}</b>
           <span class="small">${s.whatsapp ? `💬 <a href="https://wa.me/91${esc(s.whatsapp)}" target="_blank" rel="noopener">${esc(s.whatsapp)}</a>` : '<span class="bad">No WhatsApp yet</span>'}
             · ${s.upi_id ? 'UPI ' + esc(s.upi_id) : '<span class="bad">No UPI yet</span>'}</span>
-          <span class="small muted">${s.login_email ? '🔑 ' + esc(s.login_email) + (s.must_change_password ? ' <span class="pill warn">On default password</span>' : '') : '<span class="warn">No login linked</span>'}
+          <span class="small muted">${s.login_email ? '🔑 ' + esc(s.login_email) + (s.user_id ? '' : ' <span class="pill warn">Not signed in yet</span>') : '<span class="warn">No Google account linked</span>'}
             · ${nCars[s.id] || 0} cars · ${nPend[s.id] || 0} pending orders</span>
         </div>
         <button class="btn btn-ghost sm" data-act="edit-seller">Edit</button>
-      </div>`).join('')
-      : '<p class="empty">Run supabase/2-gdx-all-phases.sql first, then add sellers here.</p>';
+      </div>`).join('') : '<p class="empty">Run supabase/2-gdx-all-phases.sql first, then add sellers here.</p>');
   }
+  $('sellerList').addEventListener('click', async e => {
+    const b = e.target.closest('[data-review]'); if (!b) return;
+    const s = state.sellers.find(x => x.id === b.closest('.a-app').dataset.id); if (!s) return;
+    const approve = b.dataset.review === 'approve';
+    let note = null;
+    if (approve) { if (!confirm(`Approve ${s.shop_name} (${s.login_email}) as a seller?`)) return; }
+    else { note = prompt(`Reject ${s.shop_name}? Optional note they will see:`, ''); if (note === null) return; }
+    b.disabled = true;
+    const { error } = await sb.rpc('admin_review_seller', { p_seller: s.id, p_approve: approve, p_note: note || null });
+    if (error) { b.disabled = false; return toast(errText(error), 'warn'); }
+    toast(approve ? `${s.shop_name} approved ✓` : 'Application rejected', 'ok');
+    if (approve && s.whatsapp) {
+      const msg = `Hi ${s.shop_name}! 🎉 You're approved as a seller on GDX — Goa Diecast Exchange.\n\nSign in with Google at ${SITE}admin.html → add your UPI ID in "My shop" → start listing your cars.`;
+      if (confirm('Send them a WhatsApp message about the approval?')) window.open(`https://wa.me/91${s.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+    loadSellers();
+  });
   $('addSeller').onclick = () => openSeller(null);
-  $('resetPwBtn').onclick = async () => {
+  $('resetPwBtn').onclick = async () => {   // (no longer shown — sellers use Google)
     const s = editingSeller; if (!s) return;
     if (!confirm(`Reset ${s.shop_name}'s password to the default (${C.DEFAULT_SELLER_PASSWORD || 'abcd'})?\nThey'll set a new one at their next login.`)) return;
     const { error } = await sb.rpc('admin_reset_seller_password', { p_seller: s.id });
@@ -714,7 +821,8 @@
     $('d_outside_goa_shipping').value = s ? s.outside_goa_shipping : 100;
     $('d_active').checked = s ? s.is_active : true;
     $('d_active').disabled = !!(s && s.user_id === state.uid);   // can't pause yourself
-    $('pwRow').hidden = !(s && s.user_id && s.user_id !== state.uid);
+    $('pwRow').hidden = true;
+    $('d_email').disabled = !!(s && s.user_id === state.uid);   // your own login stays as it is
     if (s) $('pwState').textContent = s.must_change_password
       ? 'On the default password — they set their own at next login.'
       : 'Using their own password.';
@@ -754,16 +862,10 @@
         $('sellerDialogTitle').textContent = 'Edit seller';
       }
       const oldEmail = editingSeller ? (editingSeller.login_email || '') : '';
-      if (email && email !== oldEmail) {
-        let { data: how, error } = await sb.rpc('admin_create_seller_login', { p_seller: id, p_email: email });
-        if (error && /admin_create_seller_login|schema cache|does not exist/i.test(error.message || '')) {
-          ({ error } = await sb.rpc('admin_link_seller', { p_seller: id, p_email: email }));   // before phase9
-        }
+      if (email !== oldEmail && !(editingSeller && editingSeller.user_id === state.uid)) {
+        const { data: how, error } = await sb.rpc('admin_set_seller_email', { p_seller: id, p_email: email || null });
         if (error) throw error;
-        if (how === 'created') setTimeout(() => alert(`Login created for ${email}.\n\nDefault password: ${C.DEFAULT_SELLER_PASSWORD || 'abcd'}\nThey'll be asked to set their own password at first login.`), 300);
-      } else if (!email && oldEmail && !(editingSeller.user_id === state.uid)) {
-        const { error } = await sb.from('sellers').update({ user_id: null, login_email: null }).eq('id', id);
-        if (error) throw error;
+        if (how === 'waiting') setTimeout(() => alert(`Done. ${row.shop_name} can now sign in with Google as ${email} at ${SITE}admin.html — their shop opens on first sign-in.`), 300);
       }
       $('sellerDialog').close();
       toast(editingSeller && !editingSeller._justAdded ? 'Seller updated' : 'Seller added', 'ok');

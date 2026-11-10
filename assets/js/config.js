@@ -26,11 +26,7 @@ window.MHC_CONFIG = {
   FOUNDER_URL:    'https://www.facebook.com/MaitreyaHinde/',
   DESIGNER_NAME:  'MHC Digital',
   DESIGNER_URL:   'https://www.facebook.com/MHCdigital/',
-  // Shown to the master when creating/resetting seller logins — keep in sync with
-  // default_seller_password() in supabase/2-gdx-all-phases.sql
-  DEFAULT_SELLER_PASSWORD: 'abcd',
-
-  MAX_SELLERS: 25,               // how many seller shops the master can add
+  // (Sellers sign in with Google — no seller passwords.)
 
   CURRENCY:   '₹',
   GOA_PINCODE_PREFIX: '403'      // Goa pincodes (Goa rates + same-day option)
