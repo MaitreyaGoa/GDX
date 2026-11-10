@@ -1,5 +1,14 @@
 # GDX — Auctions (gdxgarage.com/auction)
 
+## New in Nov 2026
+- Opening Auctions asks **Buy or Sell**.
+- **Buy** = one list of every live auction: small photo, highest bid (and who), next minimum bid, Buy Now price, time left. Search, sort (ending soonest, newest, price, most bids), "Buy Now only", ⭐ Watching, My bids, My auctions, Ended. Updates every 10 seconds and flashes a row when its bid changes.
+- **One auction** = up to 6 photos (tap to zoom), all the numbers, **bid-step buttons** (+₹10 / +₹50 / +₹100 / +₹500 — tap once and your bid keeps following the highest bid + that step), − / + buttons, Buy Now, and a Facebook-style feed of every bid and comment from the start. Comments: anyone signed in; seller gets a "Seller" badge; author, seller or admin can delete. On phones a bar at the bottom always shows the highest bid and a Bid button.
+- **Back** returns to the list at the same place.
+- **Sell** = up to 6 photos, Google sign-in and WhatsApp number required. Sellers can add more photos later.
+- Database update: `supabase/5-update-auctions.sql`.
+
+
 ## What it does
 - Anyone signed in with Google can **start an auction**: 1 photo, title, description,
   **starting bid**, **minimum increment**, optional **Buy Now** price and **end time** (15 min – 30 days).

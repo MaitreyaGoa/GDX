@@ -3,9 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Auctions — GDX</title>
-  <meta name="description" content="Live diecast auctions from Goa collectors. Sign in with Google, bid, win.">
+  <title>Auctions — GDX · Goa Diecast Exchange</title>
+  <meta name="description" content="Live diecast auctions from Goa collectors. Sign in with Google, bid, win — or sell your own car.">
   <meta name="theme-color" content="#050604">
+  <meta property="og:title" content="GDX Auctions — bid on diecast cars from Goa collectors">
+  <meta property="og:image" content="https://www.gdxgarage.com/assets/img/og.jpg">
   <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -18,46 +20,82 @@
 <div id="siteHeader"></div>
 
 <main class="container" id="auc">
-  <!-- ===== list ===== -->
-  <section id="listView" hidden>
-    <div class="auc-head">
-      <div>
-        <h1 class="page-title">Auctions</h1>
-        <p class="muted auc-lead">Collectors list a car, everyone bids, highest bid at the end time wins.</p>
-      </div>
-      <button class="btn btn-primary" id="newBtn">+ Start an auction</button>
+  <!-- ===== 1. Buy or sell? ===== -->
+  <section id="chooseView" hidden>
+    <div class="gx-crumbs"><a href="index.html">GDX</a> / Auctions</div>
+    <h1 class="page-title" style="margin-top:8px">Auctions</h1>
+    <p class="muted ac-lead">What would you like to do today?</p>
+    <div class="ac-choose">
+      <a class="tile ac-tile ac-buy" href="auction.html?view=buy">
+        <div class="tile-top"><span class="tile-label"><span class="dot live"></span><span id="acLive">Live now</span></span><span class="tile-arrow" aria-hidden="true">→</span></div>
+        <h3>Buy</h3>
+        <p>See every live auction in one list — current highest bid, Buy Now price and time left. Pick a car, bid, come back for the next.</p>
+        <div class="tile-chips"><span>Quick +₹ bid buttons</span><span>Buy Now</span><span>Watchlist ⭐</span><span>Outbid alerts</span></div>
+      </a>
+      <a class="tile ac-tile ac-sell" href="auction.html?new=1">
+        <div class="tile-top"><span class="tile-label"><span class="dot"></span>For collectors</span><span class="tile-arrow" aria-hidden="true">→</span></div>
+        <h3>Sell</h3>
+        <p>List a car with up to 6 photos, a starting bid, minimum step, optional Buy Now and an end time.</p>
+        <div class="tile-chips"><span>Google sign-in</span><span>WhatsApp number needed</span><span>Free to list</span></div>
+      </a>
     </div>
-    <div class="chips auc-tabs" id="aucTabs">
-      <button class="chip" data-tab="live">Live</button>
-      <button class="chip" data-tab="ended">Ended</button>
-      <button class="chip" data-tab="mine">My auctions</button>
-      <button class="chip" data-tab="bids">My bids</button>
-    </div>
-    <div id="listBody"></div>
-    <details class="panel auc-rules">
+    <p class="muted small" style="margin-top:14px">Already bidding? <a class="link-btn" href="auction.html?view=buy&amp;tab=bids">My bids</a> · <a class="link-btn" href="auction.html?view=buy&amp;tab=mine">My auctions</a> · <a class="link-btn" href="auction.html?view=buy&amp;tab=watch">Watching</a></p>
+    <details class="panel auc-rules" id="rules">
       <summary>How auctions work</summary>
       <ol>
-        <li>Sign in with Google. Anyone can list one car with one photo, a starting bid, a minimum increment, an optional Buy Now price and an end time.</li>
-        <li>Each new bid must be at least the current bid + the minimum increment (the first bid at least the starting bid). Lower bids are rejected automatically.</li>
-        <li><b>Final 2 minutes:</b> each new bid must be at least ₹100 higher (or the seller's increment if bigger), and every bid resets the clock to 2 minutes. The auction ends after 2 minutes with no new bid — so last-second sniping doesn't work.</li>
+        <li>Everyone signs in with Google. Sellers also give a WhatsApp number (shown only to the winner).</li>
+        <li>Each new bid must be at least the current bid + the seller's minimum step (the first bid at least the starting bid). Lower bids are rejected automatically.</li>
+        <li><b>Final 2 minutes:</b> each new bid must be at least ₹100 higher (or the seller's step if bigger), and every bid resets the clock to 2 minutes. The auction ends after 2 minutes with no new bid — so last-second sniping doesn't work.</li>
         <li>You can't bid on your own auction or outbid yourself. Bids can't be withdrawn.</li>
         <li><b>Buy Now</b> ends the auction immediately at that price.</li>
-        <li>At the end time bidding closes and the highest bidder wins. The winner and seller then see each other's contact details.</li>
-        <li>Payment and delivery are arranged directly between the winner and the seller. GDX only hosts the auction.</li>
+        <li>When it ends, the highest bidder wins. The winner and seller then see each other's contact details and arrange payment and delivery directly. GDX only hosts the auction.</li>
       </ol>
     </details>
   </section>
 
-  <!-- ===== one auction ===== -->
-  <section id="detailView" hidden>
-    <a href="auction.html" class="back" id="backList">← All auctions</a>
-    <div id="detailBody" class="product"></div>
+  <!-- ===== 2. Buy: the full list ===== -->
+  <section id="listView" hidden>
+    <div class="gx-crumbs"><a href="index.html">GDX</a> / <a href="auction.html">Auctions</a> / Buy</div>
+    <div class="auc-head">
+      <div>
+        <h1 class="page-title" style="margin:8px 0 6px">Live auctions</h1>
+        <p class="muted auc-lead" id="listLead">Tap a car to see photos, every bid and comments — then bid.</p>
+      </div>
+      <a class="btn btn-ghost" href="auction.html?new=1">+ Sell a car</a>
+    </div>
+    <div class="chips auc-tabs" id="aucTabs">
+      <button class="chip" data-tab="live">Live</button>
+      <button class="chip" data-tab="watch">⭐ Watching</button>
+      <button class="chip" data-tab="bids">My bids</button>
+      <button class="chip" data-tab="mine">My auctions</button>
+      <button class="chip" data-tab="ended">Ended</button>
+    </div>
+    <div class="toolbar al-tools">
+      <label class="sr-only" for="alSearch">Search auctions</label>
+      <input class="search" id="alSearch" type="search" placeholder="Search car, series, seller…">
+      <label class="sr-only" for="alSort">Sort</label>
+      <select class="search sort" id="alSort">
+        <option value="ending">Ending soonest</option>
+        <option value="new">Newest</option>
+        <option value="low">Lowest current bid</option>
+        <option value="high">Highest current bid</option>
+        <option value="bids">Most bids</option>
+      </select>
+      <label class="al-toggle"><input type="checkbox" id="alBin"> Buy Now only</label>
+    </div>
+    <div id="listBody"></div>
   </section>
 
-  <!-- ===== start an auction ===== -->
+  <!-- ===== 3. One auction ===== -->
+  <section id="detailView" hidden>
+    <a href="auction.html?view=buy" class="back" id="backList">← All auctions</a>
+    <div id="detailBody"></div>
+  </section>
+
+  <!-- ===== 4. Sell ===== -->
   <section id="newView" class="narrow-form" hidden>
-    <a href="auction.html" class="back">← All auctions</a>
-    <h1 class="page-title">Start an auction</h1>
+    <div class="gx-crumbs"><a href="index.html">GDX</a> / <a href="auction.html">Auctions</a> / Sell</div>
+    <h1 class="page-title" style="margin-top:8px">Sell a car by auction</h1>
     <div id="newBody"></div>
   </section>
 </main>
@@ -71,6 +109,9 @@
       <button class="btn btn-primary" value="yes" id="cfYes">Confirm</button>
     </div>
   </form>
+</dialog>
+<dialog id="photoDlg" class="ad-zoom" aria-label="Photo">
+  <form method="dialog"><img id="zoomImg" alt=""><button class="ad-zoom-x" value="x" aria-label="Close">✕</button></form>
 </dialog>
 
 <div id="siteFooter"></div>
