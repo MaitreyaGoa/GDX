@@ -1,47 +1,31 @@
-# GDX — seller accounts guide
+# GDX — sellers (Google sign-in + admin approval)
 
-One **master admin** (you) plus up to **5 sellers**. Each seller logs in at `gdxgarage.com/admin.html` and manages only their own shop.
-
-| | Master admin | Seller |
+## Who can do what
+| | Master admin | Approved seller |
 |---|---|---|
-| Add / edit cars | All sellers' cars, can assign any seller | Only their own |
+| Logs in at `gdxgarage.com/admin.html` with | Email & password (or Google, if their Gmail is the admin) | **Google only** — no passwords |
+| Cars | All sellers' cars | Only their own |
 | Orders | All orders, filter by seller | Only orders for their cars |
-| Verify payment, ship, WhatsApp buyer | Yes, any order | Yes, their orders |
-| My shop: name, WhatsApp, UPI, QR, shipping rate | Their own shop | Their own shop |
-| Sellers tab: add, link login, pause | Yes | — |
-| Settings (store name, store WhatsApp) | Yes | — |
+| My shop (name, WhatsApp, UPI, QR) | Own shop | Own shop |
+| Sellers tab: approve / reject / add / pause | Yes | — |
+| Community tab: delivery rates, sponsors, giveaway wheel | Yes | — |
+| Settings | Yes | — |
+| Buy cars on the site | No (use a separate Google account to buy) | Yes, from other sellers |
 
-## How buying works now
-- Every car shows **"by <shop name>"**; the product page has **Chat with seller** (WhatsApp).
-- Cart groups cars by seller. At checkout the buyer pays **each seller's UPI separately** and uploads one screenshot per seller.
-- Each seller gets **their own order** (own order code). Delivery is Delhivery / India Post / same-day (Goa), rates set by the master in Admin → Community.
-- Order tracking shows the seller and a WhatsApp button to that seller.
+There is **no limit** on the number of sellers.
 
-## One-time setup
-1. Supabase → SQL Editor → run `supabase/2-gdx-all-phases.sql`.
-   - Creates your own shop ("GDX") from your current Settings, and assigns all existing cars and orders to it.
-2. Upload the website files to GitHub.
-3. Log in to admin → **My shop** → check your WhatsApp, UPI and shipping → Save.
+## How a seller joins
+**Option A — they apply**
+1. They open `gdxgarage.com/admin.html` (also linked as "Sell on GDX" in the footer and on the Sales page) → **Continue with Google**.
+2. They fill a short form: shop name, WhatsApp, area, what they sell → **Send application**.
+3. You see it at the top of **Admin → Sellers** (with a badge on the tab) → **Approve** or **Reject** (optional note they'll see).
+   After approving you can send them a ready-made WhatsApp message.
+4. They sign in with Google again → add their **UPI ID** in My shop → start listing cars.
 
-## Seller logins & passwords
-- Run `supabase/2-gdx-all-phases.sql` once — it creates logins for the 5 sellers
-  (sharmaprateek.dev@gmail.com, harish@mhc.com, omkar@mhc.com, seller1@mhc.com, seller2@mhc.com)
-  with the **default password `abcd`**, plus an empty shop for each.
-- Send each seller: `gdxgarage.com/admin.html`, their email, and `abcd`.
-- **First login:** they must set their own password (8+ characters, not `abcd`) — until then they can't see or change anything.
-  Next they must add their **WhatsApp number and UPI ID**; only then do the Orders and Cars tabs open.
-- Logins work from any device. The login is kept only until the browser is closed (not saved on the device).
-- **Change password anytime:** My shop → Change password.
-- **Forgot password:** you (master) open Sellers → the seller → **Reset password** → it goes back to `abcd` and they set a new one at next login.
-  Sellers with a real inbox (e.g. the Gmail one) can also use *Forgot password? → Email me a reset link* on the login screen.
-  The `@mhc.com` addresses can't receive email, so for them use Reset password.
-- **New seller later:** Sellers → + Add seller → shop name + email → Save. The login is created with `abcd` automatically — no Supabase step.
-- Sellers tab shows **"On default password"** next to anyone who hasn't set their own yet.
-- To change the default password: edit `default_seller_password()` at the top of the SQL file (and `DEFAULT_SELLER_PASSWORD` in `assets/js/config.js`), re-run the SQL.
+**Option B — you add them**
+Sellers → **+ Add seller** → shop name and their **Gmail address** → Save.
+Their shop opens automatically the first time they sign in with that Google account ("Not signed in yet" until then).
 
 ## Pausing or removing a seller
-- **Edit → untick Active**: their cars disappear from the shop and they can't log in. Tick again to restore.
-- **Edit → clear the login email**: removes their access but keeps their shop and cars.
-
-## Change the 5-seller limit
-Edit `assets/js/config.js` → add `MAX_SELLERS: 8,` (any number).
+- **Edit → untick Active**: cars disappear from the shop and they can't open the seller portal.
+- **Edit → clear the Gmail**: removes their sign-in but keeps their shop and cars.

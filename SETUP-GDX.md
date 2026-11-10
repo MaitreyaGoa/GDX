@@ -20,12 +20,13 @@ The old shop home is now **`shop.html`** (the Sales tile opens it). Everything i
    ```sql
    insert into public.admins (user_id) values ('PASTE-YOUR-UID-HERE');
    ```
-5. SQL Editor → paste `supabase/2-gdx-all-phases.sql` → **Run**. It ends with "GDX community update installed".
+5. SQL Editor → paste `supabase/2-gdx-all-phases.sql` → **Run**. It ends with "Google seller sign-in & approvals installed".
+   Already ran an older 2-gdx-all-phases.sql? Run `supabase/3-update-google-sellers.sql` once instead.
    (Safe to run again. `supabase/parts/` has the same SQL split into steps, for reference only.)
 
 ## 2. Website config
 `assets/js/config.js` → paste the GDX project's **Project URL** and **publishable key** (Project Settings → API).
-Contacts, WhatsApp community link and the 25-seller limit are also set there.
+Contacts and the WhatsApp community link are also set there.
 
 ## 3. Google sign-in
 Same as `BUYER-LOGIN.md`, but use `gdxgarage.com` everywhere and the **GDX** project's callback URL:
@@ -41,13 +42,13 @@ Open `gdxgarage.com/status.html` → every line should be ✅, including **GDX c
 - **Community tab** → **Delivery options & charges**: starting rates are placeholders —
   Delhivery ₹60 Goa / ₹120 India · India Post ₹50 / ₹90 · Same-day ₹150 (Goa only). Change them to your real rates and Save.
   Charges are per seller (each seller ships their own parcel). Leave "Rest of India" empty for a Goa-only option.
-- **Sellers**: + Add seller (login is created with the default password `abcd`). Harish can be added here.
+- **Sellers**: sellers sign in with **Google only** and apply; you approve them in Admin → Sellers. Or add them yourself with their Gmail address. No seller limit, no seller passwords. Details in `SELLERS.md`.
 - **Community → Sponsors**: + Add → logo, type (Sponsor / Patron / Offline store), details, WhatsApp, Maps link.
 
 ## Running a giveaway
 1. Log in at `admin.html` → Community → **Open the giveaway wheel** (same browser tab).
 2. Enter the title and prize → **Spin the wheel**.
-3. The database picks a random member (only Google sign-ins; seller/admin logins are excluded), the wheel lands on them and the win is recorded publicly as "First L." (e.g. "Rahul S.").
+3. The database picks a random member (everyone who signed in with Google, sellers included; only the master admin is left out), the wheel lands on them and the win is recorded publicly as "First L." (e.g. "Rahul S.").
 - "Leave out members who already won" is ticked by default.
 - A test draw can be removed with the ✕ next to it in the Winners list (admin only).
 - The wheel shows up to 40 names at a time; the draw is always from **all** members.
