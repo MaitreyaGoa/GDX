@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Checkout — GDX</title>
+  <meta name="theme-color" content="#050604">
+  <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script>try{var t=localStorage.getItem('gdx-theme')||'dark';document.documentElement.dataset.theme=t;}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/gdx.css">
+</head>
+<body>
+<div id="siteHeader"></div>
+
+<main class="container">
+  <ol class="steps" id="steps">
+    <li class="active">Address</li><li>Payment</li><li>Done</li>
+  </ol>
+
+  <div class="cart-layout">
+    <div>
+      <!-- Sign in (shown when signed out) -->
+      <section id="signinBox" class="panel signin-card" hidden></section>
+
+      <!-- STEP 1: delivery details -->
+      <form id="detailsForm" class="panel" novalidate>
+        <h2 class="panel-title">Delivery details</h2>
+        <div class="signed-as" id="signedAs" hidden></div>
+        <div class="field" id="addrPick" hidden><label for="addrSelect">Deliver to</label>
+          <select class="input" id="addrSelect"></select></div>
+        <div class="field"><label for="name">Full name *</label>
+          <input class="input" id="name" autocomplete="name" required></div>
+        <div class="two">
+          <div class="field"><label for="phone">Mobile number *</label>
+            <input class="input" id="phone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel-national" placeholder="10-digit number" required></div>
+          <div class="field"><label for="email">Email (from Google)</label>
+            <input class="input" id="email" type="email" autocomplete="email"></div>
+        </div>
+        <div class="field"><label for="address">Address *</label>
+          <textarea class="input" id="address" rows="3" autocomplete="street-address" placeholder="House no., street, area, landmark" required></textarea></div>
+        <div class="three">
+          <div class="field"><label for="pincode">Pincode *</label>
+            <input class="input" id="pincode" inputmode="numeric" maxlength="6" autocomplete="postal-code" required></div>
+          <div class="field"><label for="city">City / Town</label>
+            <input class="input" id="city" autocomplete="address-level2"></div>
+          <div class="field"><label for="state">State</label>
+            <input class="input" id="state" autocomplete="address-level1"></div>
+        </div>
+        <div class="field"><label>Delivery option *</label>
+          <div class="ship-opts" id="shipOpts"><p class="muted small" style="margin:0">Enter your pincode to see delivery options.</p></div></div>
+        <label class="check" id="saveAddrRow"><input type="checkbox" id="saveAddr" checked> Save this address to my account</label>
+        <div id="shipHint" class="ship-hint" hidden></div>
+        <p class="form-error" id="detailsError" hidden></p>
+        <button class="btn btn-primary btn-block" type="submit" id="toPay">Continue to payment</button>
+      </form>
+
+      <!-- STEP 2: pay each seller by UPI + upload screenshot -->
+      <section id="payBox" hidden>
+        <div class="pay-intro" id="payIntro"></div>
+        <form id="payForm" novalidate>
+          <div id="payGroups"></div>
+          <p class="form-error" id="payError" hidden></p>
+          <button class="btn btn-primary btn-block" type="submit" id="placeBtn">Submit payment &amp; place order</button>
+          <button class="link-btn back-link" type="button" id="backToDetails">← Edit delivery details</button>
+        </form>
+      </section>
+
+      <!-- STEP 3: success -->
+      <section id="doneBox" class="panel done-box" hidden>
+        <div class="done-ico">🏁</div>
+        <h2 id="doneTitle">Order placed!</h2>
+        <p id="doneLead">Your order code is</p>
+        <div id="doneCodes"></div>
+        <p class="muted">The seller will verify your payment and confirm shortly. Save your code to track your order.</p>
+        <div class="done-actions">
+          <a class="btn btn-primary" id="trackLink" href="track.html">Track order</a>
+          <a class="btn btn-ghost" href="shop.html">Keep shopping</a>
+        </div>
+      </section>
+    </div>
+
+    <aside class="panel summary" id="summary">
+      <h2 class="panel-title">Order summary</h2>
+      <div id="sumItems"></div>
+      <div class="sum-row"><span>Subtotal</span><span id="sumSubtotal">—</span></div>
+      <div class="sum-row"><span>Shipping</span><span id="sumShipping">Enter pincode</span></div>
+      <div class="sum-row total"><span>Total</span><b id="sumTotal">—</b></div>
+    </aside>
+  </div>
+</main>
+
+<div id="siteFooter"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/logo.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/checkout.js"></script>
+</body>
+</html>

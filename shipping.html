@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shipping, Payment & Returns — GDX</title>
+  <meta name="description" content="Delhivery, India Post and same-day Goa delivery, UPI payment and return policy for GDX.">
+  <meta name="theme-color" content="#050604">
+  <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script>try{var t=localStorage.getItem('gdx-theme')||'dark';document.documentElement.dataset.theme=t;}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/gdx.css">
+</head>
+<body>
+<div id="siteHeader"></div>
+
+<main class="container narrow info">
+  <h1 class="page-title">Shipping, payment & returns</h1>
+
+  <div class="info-cards">
+    <div class="info-card goa"><div class="ico">⚡</div><b>Same-day in Goa</b><span>Pick &amp; drop by local rider</span></div>
+    <div class="info-card"><div class="ico">🚚</div><b>Delhivery</b><span>Goa &amp; all India · tracking</span></div>
+    <div class="info-card"><div class="ico">📮</div><b>India Post</b><span>Speed Post · tracking</span></div>
+  </div>
+
+  <section class="panel">
+    <h2>Delivery options &amp; charges</h2>
+    <p class="muted">You choose the delivery option at checkout. Charges depend on whether your pincode is in Goa (403…) and are added per seller, because every seller ships their own parcel.</p>
+    <table class="ship-table">
+      <thead><tr><th>Option</th><th>Within Goa</th><th>Rest of India</th></tr></thead>
+      <tbody id="rates"><tr><td colspan="3" class="muted">Loading rates…</td></tr></tbody>
+    </table>
+    <ul>
+      <li>Orders are packed and dispatched within <b>1–2 working days</b> after the seller confirms your payment.</li>
+      <li>Same-day pick &amp; drop is for Goa pincodes only, for orders confirmed before the afternoon cut-off the seller tells you on WhatsApp.</li>
+      <li>Every car is packed in a box with protective padding so blister cards stay safe in transit.</li>
+      <li>Once shipped, you'll get the courier/tracking number on WhatsApp and in <a href="account.html?tab=orders">My account</a>.</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>How payment works</h2>
+    <ol>
+      <li>Add cars to your cart and enter your delivery address.</li>
+      <li>Scan the UPI QR (amount is filled in automatically) and pay with any UPI app.</li>
+      <li>Upload the payment screenshot. Your car is reserved for you right away.</li>
+      <li>We verify the payment and confirm your order — usually within a few hours.</li>
+    </ol>
+    <p class="muted">If we can't verify a payment, we'll contact you on WhatsApp before cancelling anything.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Returns & refunds</h2>
+    <ul>
+      <li>Diecast cars are collectibles, so we <b>don't accept returns for change of mind</b>.</li>
+      <li><b>Damaged in transit or wrong car received?</b> Message us within <b>48 hours</b> of delivery with an <b>unboxing video</b> and photos. We'll replace it or refund you in full.</li>
+      <li>Minor wear on blister cards/packaging from the factory isn't counted as damage unless mentioned in the listing.</li>
+      <li>If an order is cancelled from our side (e.g. stock issue), the full amount is refunded to the same UPI account within <b>2–3 working days</b>.</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>Questions?</h2>
+    <p>We're happy to help — see the <a href="contact.html">Contact page</a> or tap the WhatsApp button.</p>
+  </section>
+</main>
+
+<div id="siteFooter"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/logo.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  MHC.sb.from('shipping_methods').select('*').eq('is_active', true).order('sort').then(({ data, error }) => {
+    const box = document.getElementById('rates');
+    if (error || !data || !data.length) { box.innerHTML = '<tr><td colspan="3" class="muted">Rates are shown at checkout.</td></tr>'; return; }
+    const r = v => v == null ? '<span class="muted">—</span>' : Number(v) ? MHC.money(v) : 'FREE';
+    box.innerHTML = data.map(m => `<tr><td><b>${MHC.esc(m.name)}</b><br><span class="muted small">${MHC.esc(m.note || '')}</span></td><td>${r(m.goa_rate)}</td><td>${r(m.india_rate)}</td></tr>`).join('');
+  });
+</script>
+</body>
+</html>

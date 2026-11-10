@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GDX — Goa Diecast Exchange · Bringing Goan collectors together</title>
+  <meta name="description" content="Goa Diecast Exchange — the biggest diecast community platform in Goa. Buy from Goa sellers, bid in live auctions and win giveaways.">
+  <meta name="theme-color" content="#050604">
+  <meta property="og:title" content="GDX — Goa Diecast Exchange">
+  <meta property="og:image" content="https://www.gdxgarage.com/assets/img/og.jpg">
+  <meta property="og:url" content="https://www.gdxgarage.com/">
+  <meta property="og:description" content="The biggest diecast community platform in Goa · Sales · Auctions · Giveaways">
+  <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script>try{var t=localStorage.getItem('gdx-theme')||'dark';document.documentElement.dataset.theme=t;}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/gdx.css">
+</head>
+<body>
+<div id="siteHeader"></div>
+
+<main class="container">
+  <section class="gx-hero">
+    <div class="gx-emblem"><img data-logo src="assets/img/logo-192.png" alt="GDX — Goa Diecast Exchange Community" width="210" height="210"></div>
+    <div class="gx-hero-copy">
+      <span class="gx-kicker"><i></i>Goa's biggest diecast community</span>
+      <h1>Goa Diecast <em>Exchange</em></h1>
+      <p>Bringing Goan collectors together — buy from trusted local sellers, bid in live auctions and spin for giveaways.</p>
+      <div class="gx-stats" id="stats" aria-live="polite">
+        <span class="gx-stat"><b data-k="cars">—</b> cars for sale</span>
+        <span class="gx-stat"><b data-k="sellers">—</b> sellers</span>
+        <span class="gx-stat"><b data-k="auctions">—</b> live auctions</span>
+        <span class="gx-stat"><b data-k="members">—</b> members</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="bento" aria-label="GDX sections">
+    <!-- SALES — biggest tile -->
+    <a class="tile b-sales" href="shop.html">
+      <div class="tile-top">
+        <span class="tile-label"><span class="dot"></span>Marketplace</span>
+        <span class="tile-arrow" aria-hidden="true">→</span>
+      </div>
+      <h3>Sales</h3>
+      <p>Hot Wheels, Mini GT, Matchbox and more from sellers across Goa. Add to cart, pay each seller by UPI, track every order.</p>
+      <div class="tile-chips">
+        <span>Multiple sellers</span><span>UPI direct</span><span>Delhivery · India Post</span><span>Same-day in Goa</span>
+      </div>
+      <div class="sales-shelf" id="shelf">
+        <div class="shelf-car is-empty">🏎️</div><div class="shelf-car is-empty">🚙</div><div class="shelf-car is-empty">🏁</div>
+      </div>
+    </a>
+
+    <!-- AUCTIONS -->
+    <a class="tile b-auction" href="auction.html">
+      <div class="tile-top">
+        <span class="tile-label"><span class="dot live"></span>Live now</span>
+        <span class="tile-arrow" aria-hidden="true">→</span>
+      </div>
+      <h3>Auctions</h3>
+      <p>List a car, everyone bids. Anti-sniping clock — highest bid wins.</p>
+      <div class="auc-mini">
+        <div><b id="aucCount">—</b><small>live auctions</small></div>
+        <div><b id="aucNext">—</b><small>next one ends</small></div>
+      </div>
+    </a>
+
+    <!-- GIVEAWAYS — circular tile -->
+    <a class="tile b-give" href="giveaway.html" aria-label="Giveaways — spin the wheel">
+      <span class="give-disc">
+        <span class="give-pin" aria-hidden="true"></span>
+        <span>
+          <span class="tile-label"><span class="dot"></span>Spin &amp; win</span>
+          <h3>Giveaways</h3>
+          <p>Sign in with Google and you're in every draw.</p>
+        </span>
+      </span>
+    </a>
+  </section>
+
+  <!-- SPONSORS — small tile, bottom of the content -->
+  <a class="b-sponsor" href="sponsors.html">
+    <span class="s-ico" aria-hidden="true">🤝</span>
+    <span><b>Our Sponsors / Patrons / Hot Wheels Offline Stores</b>
+      <small id="sponsorNote">The people and shops backing Goa's diecast scene</small></span>
+    <span class="s-go" aria-hidden="true">→</span>
+  </a>
+</main>
+
+<div id="siteFooter"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/logo.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/home.js"></script>
+</body>
+</html>

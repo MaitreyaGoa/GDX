@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin — GDX</title>
+  <meta name="theme-color" content="#050604">
+  <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/admin.css">
+  <link rel="stylesheet" href="assets/css/gdx.css">
+</head>
+<body class="admin">
+
+<!-- ================= LOGIN ================= -->
+<section id="loginView" class="login-wrap" hidden>
+  <form id="loginForm" class="panel login-card" novalidate>
+    <div class="logo"><img class="logo-img" data-logo src="assets/img/logo-192.png" alt="GDX logo" width="52" height="52"><span>GDX <span class="accent">Admin</span></span></div>
+    <div class="field"><label for="email">Email</label>
+      <input class="input" id="email" type="email" autocomplete="username" required></div>
+    <div class="field"><label for="password">Password</label>
+      <input class="input" id="password" type="password" autocomplete="off" required></div>
+    <p class="form-error" id="loginError" hidden></p>
+    <button class="btn btn-primary btn-block" id="loginBtn" type="submit">Log in</button>
+    <div class="login-links">
+      <button type="button" class="link-btn" id="forgotBtn">Forgot password?</button>
+      <a href="index.html" class="link-btn">← Back to GDX</a>
+    </div>
+    <div class="forgot-box" id="forgotBox" hidden>
+      <p class="small">Ask the store admin to <b>reset your password</b> — you'll get the default password and set a new one when you log in.</p>
+      <p class="small muted">If your login email has a real inbox, you can also get a reset link:</p>
+      <button type="button" class="btn btn-ghost btn-block" id="sendResetBtn">Email me a reset link</button>
+    </div>
+    <p class="muted small login-note">You stay logged in only until you close the browser.</p>
+  </form>
+</section>
+
+<!-- ================= SET PASSWORD (first login / reset link) ================= -->
+<section id="pwView" class="login-wrap" hidden>
+  <form id="pwForm" class="panel login-card" novalidate>
+    <div class="logo"><img class="logo-img" data-logo src="assets/img/logo-192.png" alt="" width="52" height="52"><span>GDX <span class="accent">Admin</span></span></div>
+    <h2 class="panel-title" id="pwTitle">Set your own password</h2>
+    <p class="small muted" id="pwLead">You're using the default password. Choose a new one to continue — you'll use it to log in from any device.</p>
+    <div class="field"><label for="pwNew">New password</label>
+      <input class="input" id="pwNew" type="password" autocomplete="new-password" minlength="8" required></div>
+    <div class="field"><label for="pwNew2">Repeat new password</label>
+      <input class="input" id="pwNew2" type="password" autocomplete="new-password" required></div>
+    <p class="small muted">At least 8 characters. Don't reuse the default password.</p>
+    <p class="form-error" id="pwError" hidden></p>
+    <button class="btn btn-primary btn-block" id="pwBtn" type="submit">Save password &amp; continue</button>
+    <button type="button" class="link-btn back-link" id="pwLogout">Log out</button>
+  </form>
+</section>
+
+<!-- ================= APP ================= -->
+<div id="appView" hidden>
+  <header class="a-header">
+    <div class="container a-bar">
+      <a href="index.html" class="logo" target="_blank" rel="noopener" title="Open shop">
+        <img class="logo-img" data-logo src="assets/img/logo-192.png" alt="GDX logo" width="52" height="52"><span>GDX <span class="accent">Admin</span></span></a>
+      <div class="a-who"><span class="a-role" id="roleLabel"></span><button class="a-logout" id="logoutBtn">Log out</button></div>
+    </div>
+    <nav class="container a-tabs" id="tabs">
+      <button class="a-tab active" data-tab="orders">Orders <span class="a-badge" id="pendingBadge" hidden>0</span></button>
+      <button class="a-tab" data-tab="products">Cars</button>
+      <button class="a-tab" data-tab="shop">My shop</button>
+      <button class="a-tab" data-tab="sellers" data-role="admin">Sellers</button>
+      <button class="a-tab" data-tab="community" data-role="admin">Community</button>
+      <button class="a-tab" data-tab="settings" data-role="admin">Settings</button>
+    </nav>
+  </header>
+
+  <main class="container a-main">
+    <!-- ORDERS -->
+    <section id="tab-orders" class="a-section">
+      <div class="a-toolbar">
+        <div class="chips" id="statusChips"></div>
+        <div class="a-toolbar-row">
+          <input class="search" id="orderSearch" type="search" placeholder="Search code, name, phone…">
+          <select class="search sort" id="orderSeller" data-role="admin" aria-label="Seller"></select>
+          <button class="btn btn-ghost" id="refreshOrders" title="Refresh">↻</button>
+        </div>
+      </div>
+      <div id="orderList" class="a-list"></div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section id="tab-products" class="a-section" hidden>
+      <div class="a-toolbar-row">
+        <input class="search" id="productSearch" type="search" placeholder="Search cars…">
+        <select class="search sort" id="productSeller" data-role="admin" aria-label="Seller"></select>
+        <button class="btn btn-primary" id="addProduct">+ Add car</button>
+      </div>
+      <div class="a-sub muted small" id="productStats"></div>
+      <div id="productList" class="a-list"></div>
+    </section>
+
+    <!-- MY SHOP (every seller, incl. master) -->
+    <section id="tab-shop" class="a-section" hidden>
+      <div class="notice setup-note" id="setupNote" hidden><b>Welcome!</b> Add your <b>WhatsApp number</b> and <b>UPI ID</b> and save — then you can add cars and receive orders.</div>
+      <form id="shopForm" class="panel" novalidate>
+        <h2 class="panel-title">My shop &amp; payment</h2>
+        <p class="muted small">Buyers see your shop name and WhatsApp on your cars, and pay your UPI directly at checkout.</p>
+        <div class="two">
+          <div class="field"><label for="m_shop_name">Shop name *</label><input class="input" id="m_shop_name" required></div>
+          <div class="field"><label for="m_whatsapp">WhatsApp number *</label>
+            <input class="input" id="m_whatsapp" inputmode="numeric" maxlength="13" placeholder="10-digit number" required></div>
+        </div>
+        <div class="two">
+          <div class="field"><label for="m_upi_id">UPI ID *</label><input class="input" id="m_upi_id" placeholder="name@okicici" autocapitalize="off" required></div>
+          <div class="field"><label for="m_payee_name">Payee name (as in bank)</label><input class="input" id="m_payee_name"></div>
+        </div>
+        <div class="field" hidden><label for="m_outside_goa_shipping">Your shipping charge outside Goa (₹)</label>
+          <input class="input" id="m_outside_goa_shipping" type="number" min="0" step="1" inputmode="numeric">
+          <span class="muted small">Not used — delivery rates are set by the master admin (Community tab).</span></div>
+        <div class="field">
+          <label>Backup QR image (optional)</label>
+          <p class="muted small">Checkout builds a QR with the exact amount from your UPI ID. This image is only used if that fails.</p>
+          <div class="qr-row">
+            <img id="qrPreview" class="qr-preview" alt="" hidden>
+            <label class="btn btn-ghost">Upload QR<input type="file" id="qrFile" accept="image/*" hidden></label>
+            <button type="button" class="link-btn" id="qrRemove" hidden>Remove</button>
+          </div>
+        </div>
+        <p class="form-error" id="shopError" hidden></p>
+        <button class="btn btn-primary" id="saveShop" type="submit">Save my shop</button>
+      </form>
+
+      <form id="passwordForm" class="panel" novalidate>
+        <h2 class="panel-title">Change password</h2>
+        <div class="two">
+          <div class="field"><label for="newPass">New password</label><input class="input" id="newPass" type="password" autocomplete="new-password" minlength="8"></div>
+          <div class="field"><label for="newPass2">Repeat password</label><input class="input" id="newPass2" type="password" autocomplete="new-password"></div>
+        </div>
+        <button class="btn btn-dark" type="submit">Update password</button>
+      </form>
+    </section>
+
+    <!-- SELLERS (master only) -->
+    <section id="tab-sellers" class="a-section" hidden>
+      <div class="a-toolbar-row">
+        <div class="a-sub muted small grow" id="sellerStats"></div>
+        <button class="btn btn-primary" id="addSeller">+ Add seller</button>
+      </div>
+      <div id="sellerList" class="a-list"></div>
+      <div class="panel a-help">
+        <h2 class="panel-title">Adding a seller</h2>
+        <ol>
+          <li><b>+ Add seller</b> → shop name and their login email → Save. Their login is created with the <b>default password</b>.</li>
+          <li>Send them <b>gdxgarage.com/admin.html</b>, their email and the default password.</li>
+          <li>On first login they set their own password, then fill in their WhatsApp and UPI before they can add cars.</li>
+          <li>Forgot password? Open the seller → <b>Reset password</b>. They log in with the default password and set a new one.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- COMMUNITY (master only): delivery rates, giveaways, sponsors -->
+    <section id="tab-community" class="a-section" hidden>
+      <form id="shipForm" class="panel" novalidate>
+        <h2 class="panel-title">Delivery options &amp; charges</h2>
+        <p class="muted small">Buyers pick one at checkout. Charged per seller (each seller ships their own parcel). Leave "Rest of India" empty for Goa-only options. Untick to hide an option.</p>
+        <div id="shipRows"></div>
+        <p class="form-error" id="shipError" hidden></p>
+        <button class="btn btn-primary" id="saveShip" type="submit">Save delivery rates</button>
+      </form>
+
+      <section class="panel">
+        <h2 class="panel-title">Giveaways</h2>
+        <p class="muted small">The wheel picks a random member from everyone who signed in with Google. Open it in <b>this tab</b> so your admin login carries over.</p>
+        <a class="btn btn-primary" href="giveaway.html">🎡 Open the giveaway wheel</a>
+      </section>
+
+      <section class="panel">
+        <div class="a-toolbar-row" style="align-items:center">
+          <h2 class="panel-title grow" style="margin:0">Sponsors / Patrons / Offline stores</h2>
+          <button class="btn btn-primary" id="addSponsor" type="button">+ Add</button>
+        </div>
+        <div id="sponsorList" class="a-list"></div>
+      </section>
+    </section>
+
+    <!-- SETTINGS (master only) -->
+    <section id="tab-settings" class="a-section" hidden>
+      <form id="settingsForm" class="panel" novalidate>
+        <h2 class="panel-title">Store</h2>
+        <div class="two">
+          <div class="field"><label for="s_store_name">Store name</label><input class="input" id="s_store_name"></div>
+          <div class="field"><label for="s_whatsapp_number">Store WhatsApp (floating button &amp; Contact page)</label>
+            <input class="input" id="s_whatsapp_number" inputmode="numeric" placeholder="10-digit number"></div>
+        </div>
+        <p class="muted small">Payment details are set per seller in <b>My shop</b>. Delivery rates are in the <b>Community</b> tab.</p>
+        <button class="btn btn-primary" id="saveSettings" type="submit">Save settings</button>
+      </form>
+    </section>
+  </main>
+</div>
+
+<!-- ================= DIALOGS ================= -->
+<dialog id="imgDialog" class="a-dialog img-dialog">
+  <img id="imgFull" alt="Payment screenshot">
+  <div class="dialog-actions">
+    <a class="btn btn-ghost" id="imgOpen" target="_blank" rel="noopener">Open full size</a>
+    <button class="btn btn-dark" data-close>Close</button>
+  </div>
+</dialog>
+
+<dialog id="productDialog" class="a-dialog">
+  <form id="productForm" method="dialog" novalidate>
+    <h2 class="panel-title" id="productDialogTitle">Add car</h2>
+
+    <div class="field">
+      <label>Photos <span class="muted small">(first photo is the cover)</span></label>
+      <div class="photo-grid" id="photoGrid"></div>
+      <label class="upload small-upload" id="photoDrop">
+        <input type="file" id="photoFiles" accept="image/*" multiple>
+        <span>📷 Add photos (camera or gallery)</span>
+      </label>
+    </div>
+
+    <div class="field" data-role="admin"><label for="p_seller">Seller *</label>
+      <select class="input" id="p_seller"></select></div>
+    <div class="field"><label for="p_name">Car name *</label><input class="input" id="p_name" placeholder="'67 Camaro" required></div>
+    <div class="two">
+      <div class="field"><label for="p_brand">Brand *</label><input class="input" id="p_brand" list="brandList" value="Hot Wheels" required>
+        <datalist id="brandList"></datalist></div>
+      <div class="field"><label for="p_series">Series</label><input class="input" id="p_series" list="seriesList" placeholder="Car Culture, Mainline…">
+        <datalist id="seriesList"></datalist></div>
+    </div>
+    <div class="three">
+      <div class="field"><label for="p_mrp">MRP (₹) *</label><input class="input" id="p_mrp" type="number" min="0" step="1" inputmode="numeric" required></div>
+      <div class="field"><label for="p_price">Selling price (₹) *</label><input class="input" id="p_price" type="number" min="0" step="1" inputmode="numeric" required></div>
+      <div class="field"><label for="p_stock">Stock *</label><input class="input" id="p_stock" type="number" min="0" step="1" inputmode="numeric" value="1" required></div>
+    </div>
+    <div class="two">
+      <div class="field"><label for="p_category">Category *</label>
+        <select class="input" id="p_category" required>
+          <option value="">Choose…</option>
+        </select></div>
+      <div class="field"><label for="p_scale">Scale</label><input class="input" id="p_scale" value="1:64" list="scaleList">
+        <datalist id="scaleList"></datalist></div>
+    </div>
+    <div class="two">
+      <div class="field toggle-field">
+        <label class="toggle"><input type="checkbox" id="p_active" checked><span></span> Visible in shop</label>
+      </div>
+    </div>
+    <div class="field"><label for="p_description">Description</label>
+      <textarea class="input" id="p_description" rows="3" placeholder="Condition, card condition, special notes…"></textarea></div>
+
+    <p class="form-error" id="productError" hidden></p>
+    <div class="dialog-actions">
+      <button type="button" class="link-btn danger" id="deleteProduct" hidden>Delete car</button>
+      <span class="grow"></span>
+      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button type="submit" class="btn btn-primary" id="saveProduct">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="sellerDialog" class="a-dialog">
+  <form id="sellerForm" method="dialog" novalidate>
+    <h2 class="panel-title" id="sellerDialogTitle">Add seller</h2>
+    <div class="two">
+      <div class="field"><label for="d_shop_name">Shop name *</label><input class="input" id="d_shop_name" required></div>
+      <div class="field"><label for="d_whatsapp">WhatsApp number</label><input class="input" id="d_whatsapp" inputmode="numeric" maxlength="13" placeholder="Seller can add it"></div>
+    </div>
+    <div class="field"><label for="d_email">Login email</label>
+      <input class="input" id="d_email" type="email" autocapitalize="off" placeholder="seller@email.com — login is created for you">
+      <span class="muted small">New logins start with the default password. Clear the email to remove their access.</span></div>
+    <div class="pw-row" id="pwRow" hidden>
+      <span class="small" id="pwState"></span>
+      <button type="button" class="btn btn-ghost sm" id="resetPwBtn">Reset password</button>
+    </div>
+    <div class="two">
+      <div class="field"><label for="d_upi_id">UPI ID</label><input class="input" id="d_upi_id" autocapitalize="off" placeholder="They can fill this in themselves"></div>
+      <div class="field"><label for="d_payee_name">Payee name</label><input class="input" id="d_payee_name"></div>
+    </div>
+    <div class="two">
+      <div class="field" hidden><label for="d_outside_goa_shipping">Shipping outside Goa (₹)</label><input class="input" id="d_outside_goa_shipping" type="number" min="0" value="100"></div>
+      <div class="field toggle-field"><label class="toggle"><input type="checkbox" id="d_active" checked><span></span> Active (cars visible, can log in)</label></div>
+    </div>
+    <p class="form-error" id="sellerError" hidden></p>
+    <div class="dialog-actions">
+      <span class="grow"></span>
+      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button type="submit" class="btn btn-primary" id="saveSeller">Save seller</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="sponsorDialog" class="a-dialog">
+  <form id="sponsorForm" method="dialog" novalidate>
+    <h2 class="panel-title" id="sponsorTitle">Add sponsor</h2>
+    <div class="field">
+      <label>Logo</label>
+      <div class="qr-row">
+        <img id="spLogoPreview" class="qr-preview" alt="" hidden>
+        <label class="btn btn-ghost">Upload logo<input type="file" id="spLogoFile" accept="image/*" hidden></label>
+        <button type="button" class="link-btn" id="spLogoRemove" hidden>Remove</button>
+      </div>
+    </div>
+    <div class="two">
+      <div class="field"><label for="sp_name">Name *</label><input class="input" id="sp_name" required></div>
+      <div class="field"><label for="sp_kind">Type</label>
+        <select class="input" id="sp_kind"><option value="sponsor">Sponsor</option><option value="patron">Patron</option><option value="store">Hot Wheels offline store</option></select></div>
+    </div>
+    <div class="field"><label for="sp_about">About / business details</label><textarea class="input" id="sp_about" rows="3" maxlength="400"></textarea></div>
+    <div class="field"><label for="sp_address">Address</label><input class="input" id="sp_address"></div>
+    <div class="two">
+      <div class="field"><label for="sp_phone">WhatsApp / phone</label><input class="input" id="sp_phone" inputmode="numeric" placeholder="10-digit number"></div>
+      <div class="field"><label for="sp_sort">Order (lower = first)</label><input class="input" id="sp_sort" type="number" value="0"></div>
+    </div>
+    <div class="two">
+      <div class="field"><label for="sp_website">Website / Instagram link</label><input class="input" id="sp_website" placeholder="https://"></div>
+      <div class="field"><label for="sp_map">Google Maps link</label><input class="input" id="sp_map" placeholder="https://maps.app.goo.gl/…"></div>
+    </div>
+    <div class="field toggle-field"><label class="toggle"><input type="checkbox" id="sp_active" checked><span></span> Show on website</label></div>
+    <p class="form-error" id="spError" hidden></p>
+    <div class="dialog-actions">
+      <button type="button" class="link-btn danger" id="deleteSponsor" hidden>Delete</button>
+      <span class="grow"></span>
+      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button type="submit" class="btn btn-primary" id="saveSponsor">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/logo.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/catalog.js"></script>
+<script src="assets/js/admin.js"></script>
+</body>
+</html>

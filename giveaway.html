@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Giveaways — GDX · Goa Diecast Exchange</title>
+  <meta name="description" content="GDX giveaways: sign in with Google and you're in every draw. The wheel picks a random member.">
+  <meta name="theme-color" content="#050604">
+  <meta property="og:title" content="GDX Giveaways — spin & win">
+  <meta property="og:image" content="https://www.gdxgarage.com/assets/img/og.jpg">
+  <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script>try{var t=localStorage.getItem('gdx-theme')||'dark';document.documentElement.dataset.theme=t;}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/gdx.css">
+</head>
+<body>
+<div id="siteHeader"></div>
+
+<main class="container">
+  <div class="gx-pagehead">
+    <div>
+      <div class="gx-crumbs"><a href="index.html">GDX</a> / Giveaways</div>
+      <h1 class="page-title" style="margin-top:8px">Giveaways</h1>
+      <p class="muted" style="margin:0;max-width:560px">Every member who signed in with Google is on the wheel. When we spin, one name is picked at random — fair and on camera.</p>
+    </div>
+  </div>
+
+  <div class="gv-layout">
+    <section class="gv-stage">
+      <div class="gv-wheel-wrap">
+        <span class="gv-pointer" aria-hidden="true"></span>
+        <canvas id="wheel" width="1000" height="1000" role="img" aria-label="Giveaway wheel with member names"></canvas>
+        <span class="gv-hub"><img data-logo src="assets/img/logo-192.png" alt=""></span>
+      </div>
+      <div class="gv-count" id="countLine">Loading members…</div>
+    </section>
+
+    <aside class="gv-side">
+      <!-- master admin controls (shown only when logged in as admin in this tab) -->
+      <form class="panel gv-admin" id="adminBox" hidden novalidate>
+        <span class="gv-admin-tag">Admin</span>
+        <h2 class="panel-title" style="margin-bottom:12px">Spin for a winner</h2>
+        <div class="field"><label for="gTitle">Giveaway title *</label>
+          <input class="input" id="gTitle" maxlength="80" placeholder="e.g. Diwali Giveaway 2026" required></div>
+        <div class="field"><label for="gPrize">Prize</label>
+          <input class="input" id="gPrize" maxlength="120" placeholder="e.g. Hot Wheels Car Culture '67 Camaro"></div>
+        <label class="check"><input type="checkbox" id="gExclude" checked> Leave out members who already won</label>
+        <p class="form-error" id="gError" hidden></p>
+        <button class="btn btn-primary btn-block gv-spin" id="spinBtn" type="submit">🎡 Spin the wheel</button>
+        <p class="muted small" style="margin:10px 0 0">The winner is picked by the database at random, then the wheel lands on them. Every spin is recorded below.</p>
+      </form>
+
+      <section class="panel gv-join" id="joinBox">
+        <h2>Be on the wheel</h2>
+        <p>Sign in once with Google — you're automatically in every GDX giveaway.</p>
+        <div id="joinAction"></div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Winners</h2>
+        <ul class="gv-winners" id="winners"><li class="muted small" style="grid-template-columns:1fr">Loading…</li></ul>
+      </section>
+
+      <p class="muted small" id="adminHint">Running a giveaway? <a class="link-btn" href="admin.html?next=giveaway">Log in as admin</a> in this tab, then come back here to spin.</p>
+    </aside>
+  </div>
+</main>
+
+<dialog id="winDlg" class="gv-dialog">
+  <form method="dialog">
+    <div class="big">🏆</div>
+    <p style="margin:8px 0 0" id="winTitle">Winner</p>
+    <h2 id="winName">—</h2>
+    <p id="winPrize"></p>
+    <button class="btn btn-primary" value="ok">Awesome!</button>
+  </form>
+</dialog>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<div id="siteFooter"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/logo.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/giveaway.js"></script>
+</body>
+</html>
