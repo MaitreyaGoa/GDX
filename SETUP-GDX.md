@@ -21,7 +21,8 @@ The old shop home is now **`shop.html`** (the Sales tile opens it). Everything i
    insert into public.admins (user_id) values ('PASTE-YOUR-UID-HERE');
    ```
 5. SQL Editor → paste `supabase/2-gdx-all-phases.sql` → **Run**. It ends with "Google seller sign-in & approvals installed".
-   Already ran an older 2-gdx-all-phases.sql? Run `supabase/3-update-google-sellers.sql` once instead.
+   Already ran an older 2-gdx-all-phases.sql? Run `supabase/3-update-google-sellers.sql` and then `supabase/4-update-admins.sql` once each instead.
+6. **Admins (Maitreya + Harish):** sign in once on the site with Google as Maitreya, then run the **private** `gdx-admins-PRIVATE.sql` you got in chat (it is not in this folder on purpose — never upload it).
    (Safe to run again. `supabase/parts/` has the same SQL split into steps, for reference only.)
 
 ## 2. Website config
