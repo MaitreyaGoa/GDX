@@ -467,7 +467,27 @@
     }, { passive: true });
   }
 
+  // Red dot on "Auctions" in the menu when I've been outbid on a live auction
+  async function outbidDot() {
+    try {
+      await ready;
+      if (!Auth.user || !sb) return;
+      const r = await sb.from('auction_bids').select('auction_id').limit(500);
+      const ids = [...new Set((r.data || []).map(b => b.auction_id))];
+      if (!ids.length) return;
+      const { data } = await sb.from('auctions').select('id,current_bidder,end_time,status').in('id', ids).eq('status', 'live').gt('end_time', new Date().toISOString());
+      const out = (data || []).filter(a => a.current_bidder !== Auth.user.id).length;
+      const lead = (data || []).length - out;
+      document.querySelectorAll('.nav-links a[href="auction.html"]').forEach(l => {
+        l.querySelector('.nav-dot') && l.querySelector('.nav-dot').remove();
+        if (out) { l.insertAdjacentHTML('beforeend', `<span class="nav-dot out" title="Outbid on ${out} auction${out > 1 ? 's' : ''}">${out}</span>`); l.setAttribute('href', 'auction.html?view=buy&tab=bids'); }
+        else if (lead) l.insertAdjacentHTML('beforeend', `<span class="nav-dot lead" title="Leading on ${lead}"></span>`);
+      });
+    } catch (e) { /* auctions not set up yet */ }
+  }
+
   initTheme();
+  document.addEventListener('DOMContentLoaded', () => { outbidDot(); setInterval(() => { if (document.visibilityState === 'visible') outbidDot(); }, 30000); });
   document.addEventListener('DOMContentLoaded', () => { addScene(); renderChrome(); fillLogos(); enableTilt(); applyTheme(currentTheme(), false); updateAccountButton(); });
 
   window.MHC = { C, sb, store, money, esc, param, isGoa, placeholder, cover, Cart,

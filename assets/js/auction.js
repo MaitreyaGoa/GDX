@@ -174,6 +174,10 @@
       const iso = new Date(now()).toISOString();
       let q = sb.from('auctions').select(COLS);
       myBids = null;
+      if (me) {   // which auctions I've bid on → Leading / Outbid badges on every tab
+        const r = await sb.from('auction_bids').select('auction_id,amount').order('created_at', { ascending: false }).limit(500);
+        if (!r.error) { myBids = {}; (r.data || []).forEach(b => { myBids[b.auction_id] = Math.max(myBids[b.auction_id] || 0, b.amount); }); }
+      }
       if (tab === 'live') q = q.eq('status', 'live').gt('end_time', iso).limit(200);
       if (tab === 'ended') q = q.or(`status.eq.sold,and(status.eq.live,end_time.lte.${iso})`).order('end_time', { ascending: false }).limit(60);
       if (tab === 'mine') q = q.eq('seller_id', me).order('created_at', { ascending: false }).limit(100);
@@ -183,10 +187,7 @@
         q = q.in('id', ids);
       }
       if (tab === 'bids') {
-        const r = await sb.from('auction_bids').select('auction_id,amount').order('created_at', { ascending: false }).limit(300);
-        if (r.error) { body.innerHTML = `<p class="empty">${esc(errMsg(r.error))}</p>`; return; }
-        myBids = {};
-        (r.data || []).forEach(b => { myBids[b.auction_id] = Math.max(myBids[b.auction_id] || 0, b.amount); });
+        if (!myBids) { body.innerHTML = '<p class="empty">Couldn\'t load your bids.</p>'; return; }
         const ids = Object.keys(myBids);
         if (!ids.length) { rows = []; body.innerHTML = emptyBox('You haven\'t bid on anything yet.', 'See live auctions', 'auction.html?view=buy'); return; }
         q = q.in('id', ids);
@@ -213,6 +214,13 @@
       changed = changed instanceof Set ? changed : new Set();
       const body = $('listBody');
       if (!rows.length && body.querySelector('.panel, .empty')) return;
+      // my live auctions summary: Leading / Outbid
+      let lead = 0, out = 0;
+      if (myBids) rows.forEach(a => { if (isLive(a) && myBids[a.id] != null) { if (a.current_bidder === me) lead++; else out++; } });
+      const summary = lead || out ? `<div class="al-mine">
+          ${lead ? `<span class="bid-flag lead"><i></i>Leading on ${lead}</span>` : ''}
+          ${out ? `<span class="bid-flag out"><i></i>Outbid on ${out} — bid again to win</span>` : ''}
+        </div>` : '';
       const term = $('alSearch').value.trim().toLowerCase();
       let list = rows.filter(a => !term || [a.title, a.description, a.seller_name].join(' ').toLowerCase().includes(term));
       if ($('alBin').checked) list = list.filter(a => a.buy_now_price && isLive(a));
@@ -237,6 +245,7 @@
         return;
       }
       body.innerHTML = `
+        ${summary}
         <div class="al-list" role="table" aria-label="Auctions">
           <div class="al-row al-headrow" role="row">
             <span role="columnheader">Car</span><span role="columnheader">Highest bid</span><span role="columnheader">Next bid</span>
@@ -253,14 +262,15 @@
       let pill = '';
       if (a.status === 'cancelled') pill = '<span class="auc-pill">Cancelled</span>';
       else if (a.status === 'removed') pill = '<span class="auc-pill">Removed</span>';
-      else if (myBids && me) pill = mineWin ? `<span class="auc-pill ${done ? 'won' : 'win'}">${done ? 'You won' : 'You\'re winning'}</span>`
-                                            : `<span class="auc-pill out">${done ? 'Not won' : 'Outbid'}</span>`;
-      else if (mineWin) pill = `<span class="auc-pill ${done ? 'won' : 'win'}">${done ? 'You won' : 'You\'re winning'}</span>`;
+      else if (myBids && myBids[a.id] != null) pill = mineWin
+        ? (done ? '<span class="bid-flag lead"><i></i>You won</span>' : '<span class="bid-flag lead"><i></i>Leading</span>')
+        : (done ? '<span class="bid-flag lost"><i></i>Not won</span>' : '<span class="bid-flag out"><i></i>Outbid</span>');
+      else if (mineWin) pill = done ? '<span class="bid-flag lead"><i></i>You won</span>' : '<span class="bid-flag lead"><i></i>Leading</span>';
       else if (mineSeller) pill = '<span class="auc-pill">Your auction</span>';
       const n = comments[a.id] || 0;
       const w = watching(a.id);
       return `
-        <a class="al-row${live ? '' : ' is-done'}${flash ? ' flash' : ''}" role="row" href="auction.html?id=${encodeURIComponent(a.id)}">
+        <a class="al-row${live ? '' : ' is-done'}${flash ? ' flash' : ''}${live && myBids && myBids[a.id] != null ? (mineWin ? ' st-lead' : ' st-out') : ''}" role="row" href="auction.html?id=${encodeURIComponent(a.id)}">
           <span class="al-car" role="cell">
             <span class="al-thumb"><img src="${esc(url(a.photo_path))}" alt="" loading="lazy"></span>
             <span class="al-name"><b>${esc(a.title)}</b>
@@ -475,6 +485,9 @@
               <span class="card-brand">Auction · by ${esc(a.seller_name)}</span>
               <button type="button" class="al-star ad-star${watching(a.id) ? ' on' : ''}" id="starBtn" aria-pressed="${watching(a.id)}">${watching(a.id) ? '★ Watching' : '☆ Watch'}</button>
             </div>
+            ${me && isLive(a) && bids.some(b => b.is_me) ? (a.current_bidder === me
+              ? '<span class="bid-flag lead big"><i></i>Leading — you have the highest bid</span>'
+              : '<span class="bid-flag out big"><i></i>Outbid — bid again to win</span>') : ''}
             <h1 class="product-title">${esc(a.title)}</h1>
             ${a.description ? `<p class="desc">${esc(a.description).replace(/\n/g, '<br>')}</p>` : ''}
             <div class="auc-panel">
