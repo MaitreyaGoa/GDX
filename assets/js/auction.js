@@ -34,7 +34,9 @@
   const LATE_MS = 2 * 60 * 1000, LATE_STEP = 100;
   const isLate = a => isLive(a) && new Date(a.end_time).getTime() - now() <= LATE_MS;
   const step = a => isLate(a) ? Math.max(a.min_increment, LATE_STEP) : a.min_increment;
-  const nextMin = a => a.current_bid == null ? a.start_price : a.current_bid + step(a);
+  // first bid: the starting bid — or one step when the auction starts at ₹0
+  const firstMin = a => a.start_price === 0 ? a.min_increment : a.start_price;
+  const nextMin = a => a.current_bid == null ? firstMin(a) : a.current_bid + step(a);
   const fmtDate = d => new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
   const ago = d => {
     const s = Math.max(0, Math.floor((now() - new Date(d).getTime()) / 1000));
@@ -455,7 +457,7 @@
         .sort((x, y) => new Date(x.at) - new Date(y.at));
       const topAmt = bids.length ? Math.max(...bids.map(b => b.amount)) : null;
       return items.map(it => {
-        if (it.t === 'start') return `<li class="af-item af-sys"><span class="af-ico">🏁</span><span><b>${esc(a.seller_name)}</b> started this auction at <b>${money(a.start_price)}</b> · +${money(a.min_increment)} steps${a.buy_now_price ? ` · Buy Now ${money(a.buy_now_price)}` : ''}<small>${ago(it.at)}</small></span></li>`;
+        if (it.t === 'start') return `<li class="af-item af-sys"><span class="af-ico">🏁</span><span><b>${esc(a.seller_name)}</b> started this auction at <b>${money(a.start_price)}</b>${a.start_price === 0 ? ` (first bid ${money(a.min_increment)}+)` : ''} · +${money(a.min_increment)} steps${a.buy_now_price ? ` · Buy Now ${money(a.buy_now_price)}` : ''}<small>${ago(it.at)}</small></span></li>`;
         if (it.t === 'bid') {
           const b = it.b;
           return `<li class="af-item af-bid${b.is_me ? ' me' : ''}${b.amount === topAmt ? ' top' : ''}"><span class="af-ico">${b.is_buy_now ? '⚡' : '🔨'}</span>
@@ -622,7 +624,7 @@
       const fail = m => { if (err) { err.textContent = m; err.hidden = false; err.scrollIntoView({ block: 'center', behavior: 'smooth' }); } else toast(m, 'warn'); };
       const min = nextMin(a);
       if (!/^\d+$/.test(String(raw))) return fail('Enter a whole rupee amount, e.g. ' + min);
-      if (amt < min) return fail(a.current_bid == null ? `Bid at least the starting bid of ${money(min)}.`
+      if (amt < min) return fail(a.current_bid == null ? (a.start_price === 0 ? `The first bid must be at least ${money(min)} (one step from ₹0).` : `Bid at least the starting bid of ${money(min)}.`)
         : `Bid at least ${money(min)} (highest bid + ${money(step(a))}${isLate(a) ? ' in the final 2 minutes' : ''}).`);
       if (a.buy_now_price && amt >= a.buy_now_price) return fail(`That's at or above the Buy Now price — use Buy Now for ${money(a.buy_now_price)}.`);
       const big = amt >= min * 3 && amt - min >= 1000;
@@ -687,7 +689,7 @@
         <div class="field"><label for="desc">Description</label>
           <textarea id="desc" class="input" rows="3" maxlength="600" placeholder="Condition, card, year, anything buyers should know"></textarea></div>
         <div class="three">
-          <div class="field"><label for="start">Starting bid (₹) *</label><input id="start" class="input" type="number" inputmode="numeric" min="1" step="1" placeholder="100"></div>
+          <div class="field"><label for="start">Starting bid (₹) *</label><input id="start" class="input" type="number" inputmode="numeric" min="0" step="1" placeholder="0 or more"></div>
           <div class="field"><label for="inc">Min. step (₹) *</label><input id="inc" class="input" type="number" inputmode="numeric" min="1" step="1" value="10"></div>
           <div class="field"><label for="bin">Buy Now (₹)</label><input id="bin" class="input" type="number" inputmode="numeric" min="1" step="1" placeholder="Optional"></div>
         </div>
@@ -741,7 +743,7 @@
       let wa = $('wa').value.replace(/\D/g, ''); if (wa.length === 12 && wa.startsWith('91')) wa = wa.slice(2);
       if (!files.length) return fail('Please add at least one photo of the car.');
       if (title.length < 3) return fail('Please enter a title (at least 3 letters).');
-      if (!start || start < 1) return fail('Starting bid must be a whole amount of at least ₹1.');
+      if (start == null || Number.isNaN(start) || start < 0) return fail('Enter a starting bid — ₹0 or more.');
       if (!inc || inc < 1) return fail('Minimum step must be a whole amount of at least ₹1.');
       if (Number.isNaN(bin)) return fail('Buy Now must be a whole rupee amount (or leave it empty).');
       if (bin != null && bin < start + inc) return fail(`Buy Now must be at least ${money(start + inc)} (starting bid + step), or leave it empty.`);
