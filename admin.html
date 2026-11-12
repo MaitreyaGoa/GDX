@@ -207,7 +207,7 @@
 
       <section class="panel">
         <div class="a-toolbar-row" style="align-items:center">
-          <h2 class="panel-title grow" style="margin:0">Sponsors / Patrons / Offline stores</h2>
+          <h2 class="panel-title grow" style="margin:0">Partners — sponsors, stores, garages, services</h2>
           <button class="btn btn-primary" id="addSponsor" type="button">+ Add</button>
         </div>
         <div id="sponsorList" class="a-list"></div>
@@ -342,8 +342,15 @@
     <div class="two">
       <div class="field"><label for="sp_name">Name *</label><input class="input" id="sp_name" required></div>
       <div class="field"><label for="sp_kind">Type</label>
-        <select class="input" id="sp_kind"><option value="sponsor">Sponsor</option><option value="patron">Patron</option><option value="store">Hot Wheels offline store</option></select></div>
+        <select class="input" id="sp_kind"><option value="sponsor">Sponsor</option><option value="store">Offline store</option><option value="online">Online shop / site</option><option value="garage">Display &amp; storage (garages, cases)</option><option value="service">Customizer / service</option><option value="patron">Patron</option></select></div>
     </div>
+    <div class="two">
+      <div class="field"><label for="sp_tier">Listing</label>
+        <select class="input" id="sp_tier"><option value="standard">Standard</option><option value="featured">⭐ Featured (top + home page)</option></select></div>
+      <div class="field"><label for="sp_until">Listed until</label><input class="input" id="sp_until" type="date">
+        <span class="muted small">Hides itself after this date. Empty = no end.</span></div>
+    </div>
+    <div class="field"><label for="sp_offer">GDX member offer</label><input class="input" id="sp_offer" maxlength="120" placeholder="e.g. 10% off for GDX members — show this page"></div>
     <div class="field"><label for="sp_about">About / business details</label><textarea class="input" id="sp_about" rows="3" maxlength="400"></textarea></div>
     <div class="field"><label for="sp_address">Address</label><input class="input" id="sp_address"></div>
     <div class="two">
@@ -351,7 +358,10 @@
       <div class="field"><label for="sp_sort">Order (lower = first)</label><input class="input" id="sp_sort" type="number" value="0"></div>
     </div>
     <div class="two">
-      <div class="field"><label for="sp_website">Website / Instagram link</label><input class="input" id="sp_website" placeholder="https://"></div>
+      <div class="field"><label for="sp_website">Website</label><input class="input" id="sp_website" placeholder="https://"></div>
+      <div class="field"><label for="sp_insta">Instagram</label><input class="input" id="sp_insta" placeholder="@handle or link"></div>
+    </div>
+    <div class="two">
       <div class="field"><label for="sp_map">Google Maps link</label><input class="input" id="sp_map" placeholder="https://maps.app.goo.gl/…"></div>
     </div>
     <div class="field toggle-field"><label class="toggle"><input type="checkbox" id="sp_active" checked><span></span> Show on website</label></div>

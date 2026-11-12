@@ -44,7 +44,7 @@ Open `gdxgarage.com/status.html` → every line should be ✅, including **GDX c
   Delhivery ₹60 Goa / ₹120 India · India Post ₹50 / ₹90 · Same-day ₹150 (Goa only). Change them to your real rates and Save.
   Charges are per seller (each seller ships their own parcel). Leave "Rest of India" empty for a Goa-only option.
 - **Sellers**: sellers sign in with **Google only** and apply; you approve them in Admin → Sellers. Or add them yourself with their Gmail address. No seller limit, no seller passwords. Details in `SELLERS.md`.
-- **Community → Sponsors**: + Add → logo, type (Sponsor / Patron / Offline store), details, WhatsApp, Maps link.
+- **Community → Partners**: + Add → logo, type (Sponsor / Offline store / Online shop / Display & storage / Customizer-service / Patron), Standard or ⭐ Featured, "Listed until" date (hides itself after), member offer, WhatsApp, Instagram, website, Maps link. Views and clicks show on each listing. Public page: `partners.html` (old `sponsors.html` links redirect).
 
 ## Running a giveaway
 1. Log in at `admin.html` → Community → **Open the giveaway wheel** (same browser tab).

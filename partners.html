@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Partners — GDX · Goa Diecast Exchange</title>
+  <meta name="description" content="Hot Wheels and diecast stores, online shops, display garages, customizers and sponsors backing GDX — Goa's diecast community. Exclusive offers for GDX members.">
+  <meta name="theme-color" content="#050604">
+  <meta property="og:title" content="GDX Partners — stores, garages & sponsors for diecast collectors">
+  <meta property="og:image" content="https://www.gdxgarage.com/assets/img/og.jpg">
+  <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script>try{var t=localStorage.getItem('gdx-theme')||'dark';document.documentElement.dataset.theme=t;}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/gdx.css">
+</head>
+<body>
+<div id="siteHeader"></div>
+
+<main class="container">
+  <div class="gx-crumbs"><a href="index.html">GDX</a> / Partners</div>
+  <div class="pt-head">
+    <div>
+      <h1 class="page-title" style="margin:8px 0 6px">GDX Partners</h1>
+      <p class="muted pt-lead">Stores, online shops, display garages, customizers and sponsors backing Goa's diecast scene. Look for <b class="pt-offer-word">GDX member offers</b>.</p>
+    </div>
+    <a class="btn btn-primary" id="advTop" href="#advertise">📣 Advertise with GDX</a>
+  </div>
+
+  <div class="chips sp-tabs pt-tabs" id="tabs">
+    <button class="chip active" data-k="">All</button>
+    <button class="chip" data-k="sponsor">⭐ Sponsors</button>
+    <button class="chip" data-k="store">🏪 Offline stores</button>
+    <button class="chip" data-k="online">🌐 Online shops &amp; sites</button>
+    <button class="chip" data-k="garage">🏁 Display &amp; storage</button>
+    <button class="chip" data-k="service">🛠️ Customizers &amp; services</button>
+    <button class="chip" data-k="patron">🤝 Patrons</button>
+  </div>
+
+  <section id="featured" class="pt-featured" hidden></section>
+  <section class="sp-grid" id="list"></section>
+
+  <!-- Sell the space -->
+  <section class="pt-adv" id="advertise">
+    <div class="pt-adv-copy">
+      <span class="gx-kicker"><i></i>Advertise with GDX</span>
+      <h2>Put your brand in front of Goa's diecast collectors</h2>
+      <p>Stores, online sellers, display-case and garage makers, customizers, photographers, cafés hosting meet-ups — if collectors would love it, list it here.</p>
+      <ul class="pt-perks">
+        <li>✓ Your logo, details, WhatsApp, Instagram, website and map directions</li>
+        <li>✓ <b>Featured</b> partners show first, bigger, and on the GDX home page</li>
+        <li>✓ Add a member offer — "10% off for GDX members" — to bring people in</li>
+        <li>✓ We share how many people saw and clicked your listing</li>
+        <li>✓ Sponsor a giveaway or auction day and get a shout-out in the community</li>
+      </ul>
+    </div>
+    <div class="pt-adv-plans">
+      <div class="pt-plan">
+        <b>Standard listing</b>
+        <span>Logo + details in your category</span>
+      </div>
+      <div class="pt-plan featured">
+        <b>⭐ Featured partner</b>
+        <span>Top of this page + GDX home page + highlighted card</span>
+      </div>
+      <div class="pt-plan">
+        <b>🎁 Giveaway sponsor</b>
+        <span>Your prize on the giveaway wheel, with your name on the winners list</span>
+      </div>
+      <div class="pt-adv-cta" id="advCta"></div>
+    </div>
+  </section>
+</main>
+
+<div id="siteFooter"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/logo.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/partners.js"></script>
+</body>
+</html>
