@@ -47,8 +47,14 @@
   // Sponsor count
   (async () => {
     try {
-      const { count } = await sb.from('sponsors').select('id', { count: 'exact', head: true }).eq('is_active', true);
-      if (count) $('sponsorNote').textContent = `${count} partner${count > 1 ? 's' : ''} backing Goa's diecast scene — see them all`;
+      const { data } = await sb.from('sponsors').select('id,name,logo_url,tier,offer').eq('is_active', true).order('sort');
+      const list = data || [];
+      if (list.length) {
+        const offers = list.filter(s => s.offer).length;
+        $('sponsorNote').textContent = `${list.length} partner${list.length > 1 ? 's' : ''} backing Goa's diecast scene${offers ? ` · ${offers} member offer${offers > 1 ? 's' : ''}` : ''} — see them all`;
+        const feat = list.filter(s => s.tier === 'featured' && s.logo_url).concat(list.filter(s => s.tier !== 'featured' && s.logo_url)).slice(0, 5);
+        $('sponsorLogos').innerHTML = feat.map(s => `<img src="${esc(s.logo_url)}" alt="${esc(s.name)}" title="${esc(s.name)}" loading="lazy">`).join('');
+      }
     } catch (e) {}
   })();
 })();

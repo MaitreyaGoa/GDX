@@ -938,7 +938,8 @@
   });
 
   let sponsors = [], editingSponsor = null, spLogo = null, spOldLogo = null;
-  const KIND_LABEL = { sponsor: 'Sponsor', patron: 'Patron', store: 'Offline store' };
+  const KIND_LABEL = { sponsor: 'Sponsor', patron: 'Patron', store: 'Offline store', online: 'Online shop', garage: 'Display & storage', service: 'Service' };
+  const today = () => new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
   async function loadSponsors() {
     const { data, error } = await sb.from('sponsors').select('*').order('sort').order('created_at');
     if (error) { $('sponsorList').innerHTML = `<p class="muted small">${esc(errText(error))}</p>`; return; }
@@ -947,7 +948,8 @@
       <div class="a-seller${s.is_active ? '' : ' hidden-prod'}" data-id="${esc(s.id)}">
         <div class="a-seller-info">
           <b>${s.logo_url ? `<img src="${esc(s.logo_url)}" alt="" style="width:26px;height:26px;border-radius:8px;object-fit:cover;display:inline-block;vertical-align:middle;margin-right:6px">` : ''}${esc(s.name)}
-            <span class="pill cat">${KIND_LABEL[s.kind] || s.kind}</span>${s.is_active ? '' : ' <span class="pill bad">Hidden</span>'}</b>
+            <span class="pill cat">${KIND_LABEL[s.kind] || s.kind}</span>${s.tier === 'featured' ? ' <span class="pill ok-pill">⭐ Featured</span>' : ''}${s.is_active ? '' : ' <span class="pill bad">Hidden</span>'}${s.paid_until && s.paid_until < today() ? ' <span class="pill bad">Expired</span>' : ''}</b>
+          <span class="small muted">👁 ${Number(s.views || 0)} views · 👆 ${Number(s.clicks || 0)} clicks${s.paid_until ? ' · until ' + new Date(s.paid_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>
           <span class="small muted">${esc(s.about || s.address || '')}</span>
         </div>
         <button class="btn btn-ghost sm" data-sp="${esc(s.id)}">Edit</button>
@@ -956,12 +958,16 @@
   function showSpLogo(url) { $('spLogoPreview').hidden = !url; $('spLogoRemove').hidden = !url; if (url) $('spLogoPreview').src = url; }
   function openSponsor(s) {
     editingSponsor = s; spLogo = s ? s.logo_url : null; spOldLogo = spLogo;
-    $('sponsorTitle').textContent = s ? 'Edit ' + s.name : 'Add sponsor / store';
+    $('sponsorTitle').textContent = s ? 'Edit ' + s.name : 'Add partner';
     $('sp_name').value = s ? s.name : ''; $('sp_kind').value = s ? s.kind : 'sponsor';
     $('sp_about').value = s ? s.about || '' : ''; $('sp_address').value = s ? s.address || '' : '';
     $('sp_phone').value = s ? s.phone || '' : ''; $('sp_sort').value = s ? s.sort : 0;
     $('sp_website').value = s ? s.website || '' : ''; $('sp_map').value = s ? s.map_url || '' : '';
     $('sp_active').checked = s ? s.is_active : true;
+    $('sp_tier').value = s ? (s.tier || 'standard') : 'standard';
+    $('sp_until').value = s && s.paid_until ? s.paid_until : '';
+    $('sp_offer').value = s ? s.offer || '' : '';
+    $('sp_insta').value = s ? s.instagram || '' : '';
     $('deleteSponsor').hidden = !s; $('spError').hidden = true;
     showSpLogo(spLogo);
     $('sponsorDialog').showModal();
@@ -985,7 +991,9 @@
       name: $('sp_name').value.trim(), kind: $('sp_kind').value, about: $('sp_about').value.trim() || null,
       address: $('sp_address').value.trim() || null, phone: $('sp_phone').value.replace(/\D/g, '') || null,
       sort: Number($('sp_sort').value || 0), website: $('sp_website').value.trim() || null,
-      map_url: $('sp_map').value.trim() || null, is_active: $('sp_active').checked, logo_url: spLogo
+      map_url: $('sp_map').value.trim() || null, is_active: $('sp_active').checked, logo_url: spLogo,
+      tier: $('sp_tier').value, paid_until: $('sp_until').value || null,
+      offer: $('sp_offer').value.trim() || null, instagram: $('sp_insta').value.trim() || null
     };
     if (!row.name) return show('Enter a name.');
     if (!okUrl(row.website) || !okUrl(row.map_url)) return show('Links must start with https://');
