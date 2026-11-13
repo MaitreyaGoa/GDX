@@ -253,10 +253,21 @@
     window.scrollTo(0, 0);
   });
 
-  // close buttons in dialogs
+  // Dialogs: forms (add/edit) close only with Cancel or Save — never by clicking outside,
+  // so typed details aren't lost. Esc asks first if something was typed.
+  // Simple viewers (no form) still close by clicking outside.
   document.querySelectorAll('dialog').forEach(d => {
+    const isForm = !!d.querySelector('form input, form textarea, form select');
+    let dirty = false;
+    d.addEventListener('input', () => { dirty = true; });
+    d.addEventListener('change', () => { dirty = true; });
+    new MutationObserver(() => { if (d.open) dirty = false; }).observe(d, { attributes: true, attributeFilter: ['open'] });
     d.addEventListener('click', e => {
-      if (e.target.closest('[data-close]') || e.target === d) d.close();
+      if (e.target.closest('[data-close]')) return d.close();
+      if (e.target === d && !isForm) d.close();
+    });
+    d.addEventListener('cancel', e => {   // Esc key
+      if (isForm && dirty && !confirm('Close without saving? What you typed will be lost.')) e.preventDefault();
     });
   });
 

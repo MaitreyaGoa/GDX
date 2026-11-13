@@ -5,7 +5,7 @@
   const $ = id => document.getElementById(id);
   const canvas = $('wheel'), ctx = canvas.getContext('2d');
   const SIZE = canvas.width, R = SIZE / 2;
-  const MAX_SLICES = 40;
+  const MAX_SLICES = 100;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Admin session lives in this tab only (same as the admin panel)
@@ -38,10 +38,11 @@
       // name along the slice
       ctx.save(); ctx.rotate(i * seg + seg / 2);
       ctx.fillStyle = c.fg; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-      const fs = Math.max(16, Math.min(40, Math.floor(seg * R * 0.55)));
+      // text sized to the slice: big when few names, still readable with 100
+      const fs = Math.max(12, Math.min(40, Math.floor(seg * (R - 40) * 0.62)));
       ctx.font = `700 ${fs}px "Space Grotesk", "Geist", system-ui, sans-serif`;
       let label = slices[i] || 'GDX';
-      const maxW = R * 0.62;
+      const maxW = n > 60 ? R * 0.42 : n > 30 ? R * 0.52 : R * 0.62;
       while (ctx.measureText(label).width > maxW && label.length > 3) label = label.slice(0, -2) + '…';
       ctx.fillText(label, R - 34, 0);
       ctx.restore();
@@ -50,7 +51,7 @@
     // studs on the rim
     for (let i = 0; i < n; i++) {
       const a = angle + i * seg;
-      ctx.beginPath(); ctx.arc(R + Math.cos(a) * (R - 14), R + Math.sin(a) * (R - 14), 5, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.arc(R + Math.cos(a) * (R - 14), R + Math.sin(a) * (R - 14), n > 60 ? 3 : 5, 0, Math.PI * 2);
       ctx.fillStyle = '#F2F6E9'; ctx.fill();
     }
   }
