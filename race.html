@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GDX Racing — 1:64 drag races in Goa</title>
+  <meta name="description" content="GDX Racing: 2-lane diecast drag races in Goa. Register your car, race head-to-head, and see who has won the most races — car and owner leaderboards and locked race results.">
+  <meta name="theme-color" content="#050604">
+  <meta property="og:title" content="GDX Racing — who has the fastest car in Goa? Most wins takes it.">
+  <meta property="og:image" content="https://www.gdxgarage.com/assets/img/og.jpg">
+  <link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script>try{var t=localStorage.getItem('gdx-theme')||'dark';document.documentElement.dataset.theme=t;}catch(e){}
+    if(/[?&]tv=1/.test(location.search))document.documentElement.classList.add('tv');</script>
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/gdx.css">
+</head>
+<body class="race-page">
+<div id="siteHeader"></div>
+
+<main class="container rc" id="rc">
+  <div class="gx-crumbs rc-hide-tv"><a href="index.html">GDX</a> / Racing</div>
+
+  <!-- event header -->
+  <section class="rc-hero" id="hero">
+    <div class="rc-hero-main">
+      <span class="gx-kicker"><i></i><span id="evStatus">GDX Racing</span></span>
+      <h1 id="evName">GDX Racing</h1>
+      <p class="muted" id="evMeta">2-lane drag racing · head to head · every result locked</p>
+      <div class="rc-chips" id="evChips"></div>
+    </div>
+    <div class="rc-hero-side rc-hide-tv">
+      <label class="sr-only" for="evPick">Event</label>
+      <select class="search sort" id="evPick"></select>
+      <div class="rc-hero-btns">
+        <a class="btn btn-primary" href="#tracker">🏁 Join a race</a>
+        <a class="btn btn-ghost" href="#register" id="regJump">🏎️ Register a car</a>
+        <a class="btn btn-ghost" id="tvLink" href="race.html?tv=1" target="_blank" rel="noopener">📺 TV mode</a>
+      </div>
+    </div>
+    <div class="rc-tv-cta rc-only-tv">Register: <b>gdxgarage.com/race</b></div>
+  </section>
+
+  <!-- dashboard -->
+  <section class="rc-bento" id="board">
+    <div class="tile rc-last" id="lastRace"></div>
+    <div class="tile rc-lead">
+      <div class="rc-card-head"><h2>🏎️ Cars <span class="muted small">· owner + model</span></h2><div class="chips rc-cls" id="clsChips"></div></div>
+      <div id="leaderboard"></div>
+    </div>
+    <div class="tile rc-fast">
+      <div class="rc-card-head"><h2>👑 Owners <span class="muted small">· most wins</span></h2></div>
+      <div id="owners"></div>
+    </div>
+    <div class="tile rc-stats" id="stats"></div>
+  </section>
+
+  <!-- race tracker: Race 1, 2, 3 … -->
+  <section class="panel rc-track rc-hide-tv" id="tracker" hidden>
+    <div class="rc-card-head">
+      <h2>🏁 Race tracker <span class="rc-sl-sum" id="slotSummary"></span></h2>
+      <button type="button" class="btn btn-ghost btn-sm" id="addSlots" data-addslots hidden>+ Add 30 more races</button>
+    </div>
+    <p class="muted small" style="margin:-4px 0 10px">Pick any open race and join with your car. Many can ask for the same race — the host picks the two cars and confirms it. Results lock the moment they're saved.</p>
+    <div class="rc-feenote">💰 <b>Racing is not free.</b> Every race has an entry fee, paid at the track before the race starts. ✅ Only races <b>approved by the admin</b> (Maitreya or Harish) count on the leaderboard.</div>
+    <div class="rc-upnext" id="upNext" hidden></div>
+    <div class="chips rc-sl-chips" id="slotChips"></div>
+    <div class="rc-slots" id="slotList"></div>
+  </section>
+
+  <!-- race log -->
+  <section class="panel rc-log rc-hide-tv">
+    <div class="rc-card-head">
+      <h2>🔒 Race results <span class="muted small" id="logCount"></span></h2>
+      <span class="rc-verify" id="verify">Checking…</span>
+    </div>
+    <p class="muted small" style="margin:-4px 0 12px">Every result is locked the moment the host saves it — nobody can edit or delete it. A mistake can only be voided with a reason, and stays visible. Each result is sealed to the one before it (SHA-256), and this page re-checks the whole chain.</p>
+    <div id="raceLog"></div>
+  </section>
+
+  <!-- register + my cars -->
+  <section class="rc-reg rc-hide-tv" id="register">
+    <div class="panel">
+      <h2 class="panel-title">🏁 Register a car</h2>
+      <div id="regBody"></div>
+    </div>
+    <div class="panel">
+      <h2 class="panel-title">My cars</h2>
+      <div id="myCars"><p class="muted small">Sign in to see your cars, races left and results.</p></div>
+    </div>
+  </section>
+
+  <!-- host -->
+  <section class="rc-host rc-hide-tv" id="host" hidden></section>
+  <p class="muted small rc-hide-tv" id="hostHint">Hosting? <a class="link-btn" href="admin.html?next=race">Log in as admin</a> in this tab, then come back here for race control.</p>
+</main>
+
+<dialog id="carDlg" class="gv-dialog rc-dlg"><div id="carBody"></div><form method="dialog"><button class="btn btn-ghost btn-block" value="x">Close</button></form></dialog>
+<div id="siteFooter" class="rc-hide-tv"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/logo.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/race.js"></script>
+</body>
+</html>
