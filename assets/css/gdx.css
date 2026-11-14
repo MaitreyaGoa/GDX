@@ -863,3 +863,34 @@ html.tv .rc-stat-wide { display: none; }
   background: rgba(234,179,8,.10); box-shadow: 0 0 0 1px rgba(234,179,8,.35) inset; }
 .rc-feenote b { color: #CA8A04; }
 .rc-dlg .rc-feenote { margin: 10px 0 6px; }
+
+/* Home — Racing tile (wide) */
+@media (min-width: 760px) { .b-race { grid-column: 1 / -1; } }
+.b-race { display: grid; gap: 22px; grid-template-columns: 1fr; align-items: center; }
+@media (min-width: 960px) { .b-race { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
+.b-race h3 { font-size: clamp(34px, 4.4vw, 54px); }
+.b-race::before { content: ""; position: absolute; z-index: -1; inset: auto -10% -60% 30%; height: 120%;
+  background: repeating-linear-gradient(90deg, transparent 0 46px, rgba(184,242,25,.08) 46px 50px); transform: skewX(-24deg); pointer-events: none; }
+.race-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.race-mini > div { padding: 12px 14px; border-radius: 16px; background: var(--glass-hi); box-shadow: 0 0 0 1px var(--glass-line); min-width: 0; }
+:root[data-theme="dark"] .race-mini > div { background: rgba(255,255,255,.04); }
+.race-mini b { display: block; font-family: var(--font-display); font-size: 26px; letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.race-mini > div:first-child b, .race-mini .race-lead b { font-size: 17px; line-height: 1.5; }
+.race-mini small { color: var(--muted); font-size: 12.5px; }
+.race-mini .race-lead { background: rgba(184,242,25,.12) !important; box-shadow: 0 0 0 1px rgba(143,203,0,.4) !important; }
+.rc-sl-none code { font-size: 12.5px; padding: 2px 6px; border-radius: 6px; background: rgba(127,140,110,.14); }
+.rc-owner-auto { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 12px; border-radius: 14px; background: rgba(127,140,110,.08); box-shadow: 0 0 0 1px var(--line-soft) inset; min-height: 48px; }
+.rc-owner-auto .rc-ava { width: 40px; height: 40px; font-size: 16px; }
+.rc-owner-auto > span:last-child { display: grid; min-width: 0; }
+.rc-owner-auto small { color: var(--muted); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Racing — event lifecycle */
+.rc-life { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 4px 0 12px; font-size: 12.5px; font-weight: 700; }
+.rc-life > b { color: var(--muted); font-weight: 400; }
+.rc-life span { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px; border-radius: 999px; background: rgba(127,140,110,.10); color: var(--muted); }
+.rc-life i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 11px; background: rgba(127,140,110,.2); }
+.rc-life span.done { color: #16A34A; } .rc-life span.done i { background: rgba(34,197,94,.2); }
+.rc-life span.now { background: var(--lime); color: #0B0D07; } .rc-life span.now i { background: rgba(0,0,0,.15); }
+.rc-finish { border-color: rgba(239,68,68,.5) !important; color: #DC2626 !important; }
+.rc-evnote { padding: 10px 14px; border-radius: 14px; margin: 0 0 12px; font-size: 13.5px; background: rgba(59,130,246,.10); box-shadow: 0 0 0 1px rgba(59,130,246,.35) inset; }
