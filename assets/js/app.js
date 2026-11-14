@@ -7,7 +7,8 @@
   const C = window.MHC_CONFIG || {};
   const sb = window.supabase
     ? window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true,
+        // On admin.html the Google ?code= belongs to the admin login — the member login must not touch it
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: !/admin\.html$/i.test(location.pathname),
                 flowType: 'pkce', storageKey: 'mhc-buyer-auth' }
       })
     : null;
@@ -144,6 +145,9 @@
   }
   // Remove the one-time sign-in parameters from the address bar
   function cleanAuthUrl() {
+    // The admin page has its own login: its Google ?code= belongs to it — never strip it here
+    // (doing so made admin Google sign-in silently fall back to the login screen).
+    if (/admin\.html$/i.test(location.pathname) || document.body.classList.contains('admin')) return;
     const u = new URL(location.href); let changed = false;
     ['error', 'error_code', 'error_description'].forEach(k => { if (u.searchParams.has(k)) { u.searchParams.delete(k); changed = true; } });
     if (u.searchParams.has('code') && !/^GDX-/i.test(u.searchParams.get('code'))) { u.searchParams.delete('code'); changed = true; }
