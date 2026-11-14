@@ -35,7 +35,7 @@
       <label class="sr-only" for="evPick">Event</label>
       <select class="search sort" id="evPick"></select>
       <div class="rc-hero-btns">
-        <a class="btn btn-primary" href="#tracker">🏁 Join a race</a>
+        <a class="btn btn-primary" href="#tracker" id="joinJump" data-joinjump>🏁 Join a race</a>
         <a class="btn btn-ghost" href="#register" id="regJump">🏎️ Register a car</a>
         <a class="btn btn-ghost" id="tvLink" href="race.html?tv=1" target="_blank" rel="noopener">📺 TV mode</a>
       </div>
@@ -65,6 +65,7 @@
     </div>
     <p class="muted small" style="margin:-4px 0 10px">Pick any open race and join with your car. Many can ask for the same race — the host picks the two cars and confirms it. Results lock the moment they're saved.</p>
     <div class="rc-feenote">💰 <b>Racing is not free.</b> Every race has an entry fee, paid at the track before the race starts. ✅ Only races <b>approved by the admin</b> (Maitreya or Harish) count on the leaderboard.</div>
+    <div class="rc-evnote" id="evNote" hidden></div>
     <div class="rc-upnext" id="upNext" hidden></div>
     <div class="chips rc-sl-chips" id="slotChips"></div>
     <div class="rc-slots" id="slotList"></div>

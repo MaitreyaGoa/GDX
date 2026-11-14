@@ -4,12 +4,21 @@
 - Every race is **1 vs 1**. The two racers agree the stake between themselves before the race (₹100 / ₹200 / ₹500 / ₹1000);
   20% goes to the track as track charges and the winner takes the rest. **None of this money is recorded on the website.**
 - The website only records: the two cars, who won, and **"✓ Entry fee paid"**.
-- Each car = **owner + model name** (e.g. "Rahul S. · Bone Shaker"), with its own number and permanent record.
+- Each car = **owner + model name** (e.g. "Rahul Shetye · Bone Shaker"), with its own number and permanent record.
+- The **owner name is automatic**: it comes from the member's Google sign-in (Google name, or the part of the email before @). Members only type the car model. Walk-ins added by the host keep the name the host types.
 - **No timings — only winner and loser.**
 - **Points: Win +3 · Loss +1 · 🔥 every 3 wins in a row +1 bonus** (at the 3rd, 6th, 9th… straight win). The more you race, the more you can climb.
 - Two leaderboards on the dashboard:
   - **🏎️ Cars** (owner + model) — races won, races raced, points. Sort "By points" or "By races won". The top car = the fastest car in Goa.
   - **👑 Owners** — all of an owner's cars added together, sorted by most races won.
+
+## Events — one race night at a time (admin only)
+1. **Create the event** (Race control → New event): name, date, venue, classes, prizes. Status = *Registration open*.
+   Members register cars and join races; you can confirm match-ups. Results can't be recorded yet.
+2. **▶ Start event** → *Racing live*. Now you record results on each race card.
+3. **🏁 Finish event** → *Finished*. Everything is locked for good — no more races, joins or results.
+4. Only then **+ Create the next event**. Only ONE event can be open or live at a time, and a finished event can't be re-opened.
+   (The database enforces all of this — only admins can create, start or finish events.)
 
 ## Race tracker — Race 1, 2, 3 …
 - Every event starts with **30 race slots** (Race 1 … Race 30). Host: **+ Add 30 more races** whenever needed (any number of times).
@@ -25,9 +34,9 @@
 - Tracker filters: Upcoming · Open · Confirmed · Results · My races · All.
 
 ## Before the event (host)
-1. Run `supabase/8-update-racing.sql`, `supabase/9-update-racing-simple.sql` and `supabase/10-update-race-slots.sql` once in Supabase → SQL Editor.
+1. Run `supabase/8-update-racing.sql`, `supabase/9-update-racing-simple.sql` and `supabase/10-update-race-slots.sql` `supabase/11-update-race-owner-name.sql` and `supabase/12-update-race-events.sql` once in Supabase → SQL Editor.
 2. Log in at admin.html → open `gdxgarage.com/race` in the SAME tab (or admin.html?next=race).
-3. Race control → Event settings: name, date, venue, classes, prizes → Create event.
+3. Race control → New event: name, date, venue, classes, prizes → Create event. On race night press ▶ Start event.
 4. Share `gdxgarage.com/race` — racers register their cars with Google. Walk-ins: "+ Walk-in racer".
 
 ## On the night
@@ -35,7 +44,7 @@
 - Work down the tracker: confirm the two cars for the next race → both racers settle the stake and track charge with you
   → tick **Both racers have paid the entry fee** → tap who won on the race card. The result is LOCKED.
 - Mistake? Race results → **Void** with a reason. It stays visible, struck through, and stops counting for points.
-- End of night: Status → Finished.
+- End of night: 🏁 Finish event (locks everything). Then create the next event.
 
 ## How results are protected
 - Nobody — not even admins — can edit or delete a saved result (enforced by the database).
