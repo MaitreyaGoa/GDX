@@ -34,7 +34,7 @@
 - Tracker filters: Upcoming · Open · Confirmed · Results · My races · All.
 
 ## Before the event (host)
-1. Run `supabase/8-update-racing.sql`, `supabase/9-update-racing-simple.sql` and `supabase/10-update-race-slots.sql` `supabase/11-update-race-owner-name.sql` and `supabase/12-update-race-events.sql` once in Supabase → SQL Editor.
+1. In Supabase → SQL Editor → New query, paste the whole of `supabase/RACING-ALL-IN-ONE.sql` and press Run once (installs everything for racing; safe to run again).
 2. Log in at admin.html → open `gdxgarage.com/race` in the SAME tab (or admin.html?next=race).
 3. Race control → New event: name, date, venue, classes, prizes → Create event. On race night press ▶ Start event.
 4. Share `gdxgarage.com/race` — racers register their cars with Google. Walk-ins: "+ Walk-in racer".
