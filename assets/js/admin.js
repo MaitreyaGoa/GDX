@@ -195,7 +195,8 @@
     await loadSellers();
     loadOrders(); loadProducts(); loadShop();
     if (isMaster()) { loadSettings(); loadCommunity(); }
-    if (isMaster() && new URLSearchParams(location.search).get('next') === 'giveaway') { location.href = 'giveaway.html'; return; }
+    const nxt = new URLSearchParams(location.search).get('next');
+    if (isMaster() && (nxt === 'giveaway' || nxt === 'race')) { location.href = nxt + '.html'; return; }
     applySetupGate();
     $('shopError').hidden = true;
     clearInterval(state.poll);

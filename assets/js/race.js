@@ -4,7 +4,7 @@
 //  locked results; the results themselves are written only by the database.
 // =====================================================================
 (async function () {
-  const { C, sb, esc, Auth, ready, googleButton, toast, errMsg, waLink } = window.MHC;
+  const { C, sb, esc, Auth, ready, signIn, googleButton, toast, errMsg, waLink } = window.MHC;
   const $ = id => document.getElementById(id);
   const TV = /[?&]tv=1/.test(location.search);
   const BUCKET = 'auction-photos';
@@ -20,7 +20,11 @@
   let isHost = false;
 
   let events = [], ev = null, entries = [], races = [], hostInfo = {}, cls = '';
-  let slots = [], requests = [], slotView = 'up';
+  let slots = [], requests = [], slotView = 'up', slotsErr = false;
+  // what to do after Google sign-in brings the member back (join a race, open the tracker)
+  const NEXT_KEY = 'gdx-race-next';
+  const getNext = () => { try { return JSON.parse(sessionStorage.getItem(NEXT_KEY) || 'null'); } catch (e) { return null; } };
+  const setNext = v => { try { v ? sessionStorage.setItem(NEXT_KEY, JSON.stringify(v)) : sessionStorage.removeItem(NEXT_KEY); } catch (e) {} };
   const picks = {}, feeTick = {};   // host's half-filled choices survive the auto-refresh
   const params = new URLSearchParams(location.search);
   const photo = p => p ? sb.storage.from(BUCKET).getPublicUrl(p).data.publicUrl : '';
@@ -35,7 +39,8 @@
     events = data || [];
   }
   async function loadEvent() {
-    const id = params.get('e') || (events[0] && events[0].id) || '';
+    const active = events.find(x => x.status !== 'closed');
+    const id = params.get('e') || (active && active.id) || (events[0] && events[0].id) || '';
     const all = id === ALL;
     ev = all ? null : events.find(x => x.id === id) || events[0] || null;
     const cols = 'id,event_id,number,user_id,racer_name,car_name,brand,class,photo_path,status,created_at';
@@ -44,12 +49,12 @@
     const [e, r] = await Promise.all([qe.limit(2000), qr.limit(5000)]);
     if (e.error) throw e.error; if (r.error) throw r.error;
     entries = e.data || []; races = r.data || [];
-    slots = []; requests = [];
+    slots = []; requests = []; slotsErr = false;
     if (!all && ev) {
       const [sl, rq] = await Promise.all([
         sb.from('race_slots').select('*').eq('event_id', ev.id).order('slot_no').limit(2000),
         sb.from('race_slot_requests').select('*').eq('event_id', ev.id).order('created_at').limit(5000)]);
-      slots = sl.error ? [] : sl.data || []; requests = rq.error ? [] : rq.data || [];
+      slotsErr = !!sl.error; slots = sl.error ? [] : sl.data || []; requests = rq.error ? [] : rq.data || [];
     }
     if (isHost && ev) {
       const h = await host.rpc('race_host_entries', { p_event: ev.id });
@@ -114,7 +119,7 @@
     }
     $('regJump').hidden = ev.status === 'closed';
     $('evName').textContent = ev.name;
-    $('evStatus').textContent = { open: 'Registration open', live: 'Racing live', closed: 'Finished' }[ev.status];
+    $('evStatus').textContent = { open: 'Registration open · starts soon', live: 'Racing live', closed: 'Finished · results locked' }[ev.status];
     $('evStatus').parentElement.classList.toggle('rc-live', ev.status === 'live');
     $('evMeta').textContent = [fmtDate(ev.event_date), ev.venue].filter(Boolean).join(' · ');
     $('evChips').innerHTML = [
@@ -257,8 +262,16 @@
   // ---------------------------------------------------------------- race tracker (Race 1, 2, 3 …)
   function renderTracker(S) {
     const box = $('tracker'), list = $('slotList');
-    if (!ev || !slots.length) { box.hidden = true; return; }
     box.hidden = false;
+    if (!ev || !slots.length) {
+      ['slotSummary', 'slotChips', 'upNext', 'evNote'].forEach(id => { $(id).innerHTML = ''; }); $('upNext').hidden = true; $('evNote').hidden = true;
+      $('addSlots').hidden = !(isHost && ev && !slotsErr);
+      list.innerHTML = `<div class="rc-empty rc-sl-none">🏁<br>${
+        !ev ? (events.length ? 'Pick a race night above to see its races.' : 'No race night yet — the first one is being set up. Join the WhatsApp community to hear first.')
+        : slotsErr ? (isHost ? '<b>Race slots aren\'t installed yet.</b><br>Run <code>supabase/10-update-race-slots.sql</code> once in Supabase → SQL Editor, then reload this page.' : 'Races for this night open soon — check back shortly.')
+        : (isHost ? 'No races yet. Tap <b>+ Add 30 more races</b> to open Race 1–30.' : 'Races for this night open soon — check back shortly.')}</div>`;
+      return;
+    }
     const me = Auth.user && Auth.user.id;
     const raceBy = {}; races.forEach(r => { raceBy[r.seq] = r; });
     const reqOf = id => requests.filter(q => q.slot_id === id);
@@ -270,7 +283,10 @@
       .map(([k, l]) => `<button class="chip${slotView === k ? ' active' : ''}" data-slotview="${k}">${l}</button>`).join('');
     $('upNext').innerHTML = nextUp ? `⏭️ Up next: <b>Race ${nextUp.slot_no}</b> — ${carLine(S.byId[nextUp.lane_a])} <i>vs</i> ${carLine(S.byId[nextUp.lane_b])}` : '';
     $('upNext').hidden = !nextUp;
-    $('addSlots').hidden = !isHost;
+    $('evNote').innerHTML = ev.status === 'open' ? '⏳ <b>This race night hasn\'t started yet.</b> Register your car and join races now — racing begins when the admin starts the event.'
+      : ev.status === 'closed' ? '🔒 <b>This race night is finished.</b> All results are locked. Watch for the next event.' : '';
+    $('evNote').hidden = ev.status === 'live';
+    $('addSlots').hidden = !isHost || ev.status === 'closed';
 
     const shown = slots.filter(x => slotView === 'all' || (slotView === 'up' ? x.status !== 'done' : slotView === 'mine' ? isMine(x) : x.status === slotView));
     const carMini = (e, won) => e ? `<span class="rc-sl-car${won ? ' w' : ''}" data-car="${esc(e.id)}">${carThumb(e, 'sm')}<span><b>${won ? '🏆 ' : ''}#${e.number} ${esc(e.car_name)}</b><small>${esc(e.racer_name)}</small></span></span>` : '<span class="rc-sl-car muted">— car removed —</span>';
@@ -284,7 +300,7 @@
         act = myReq ? `<div class="rc-sl-me">✓ You're in with <b>#${(S.byId[myReq.entry_id] || {}).number || '?'} ${esc((S.byId[myReq.entry_id] || {}).car_name || '')}</b>
                          <button class="link-btn" data-join="${esc(sl.id)}">Change car</button> · <button class="link-btn danger" data-leave="${esc(sl.id)}">Leave</button></div>`
           : ev.status !== 'closed' ? `<button class="btn btn-primary btn-sm btn-block" data-join="${esc(sl.id)}">🏁 Join Race ${sl.slot_no}</button>` : '';
-        if (isHost) {
+        if (isHost && ev.status !== 'closed') {
           const pk = picks[sl.id] || {};
           const asked = rq.map(q => S.byId[q.entry_id]).filter(Boolean), others = entries.filter(e => e.status !== 'withdrawn' && !asked.includes(e));
           const opts = v => `<option value="">— pick —</option>${asked.length ? `<optgroup label="Asked to join">${asked.map(e => `<option value="${esc(e.id)}"${v === e.id ? ' selected' : ''}>#${e.number} ${esc(e.car_name)} — ${esc(e.racer_name)}</option>`).join('')}</optgroup>` : ''}
@@ -297,7 +313,8 @@
         const A = S.byId[sl.lane_a], B = S.byId[sl.lane_b];
         st = sl === nextUp ? 'Up next' : 'Confirmed';
         body = `<div class="rc-sl-vs">${carMini(A)}<i>vs</i>${carMini(B)}</div><div class="rc-flags">${flagDue}<span class="rc-flag ok">✅ Approved by ${esc(sl.set_by || 'host')}</span></div><p class="rc-sl-by">Waiting to race</p>`;
-        if (isHost) act = `<div class="rc-sl-host"><span class="gv-admin-tag">Host</span>
+        if (isHost && ev.status !== 'live') act = `<div class="rc-sl-host"><span class="gv-admin-tag">Host</span><p class="rc-sl-by">▶ Start the event in Race control to record results.</p><button class="link-btn" data-reopen="${esc(sl.id)}">↺ Change cars</button></div>`;
+        else if (isHost) act = `<div class="rc-sl-host"><span class="gv-admin-tag">Host</span>
             <label class="check rc-feecheck"><input type="checkbox" data-fee="${esc(sl.id)}"${feeTick[sl.id] ? ' checked' : ''}> Both racers have paid the entry fee</label>
             <div class="rc-winbtns"><button class="btn btn-ghost btn-sm" data-slotwin="${esc(sl.id)}" data-w="${esc(sl.lane_a)}">🏆 ${A ? '#' + A.number : 'A'} won</button><button class="btn btn-ghost btn-sm" data-slotwin="${esc(sl.id)}" data-w="${esc(sl.lane_b)}">🏆 ${B ? '#' + B.number : 'B'} won</button></div>
             <button class="link-btn" data-reopen="${esc(sl.id)}">↺ Change cars</button></div>`;
@@ -308,6 +325,7 @@
             <div class="rc-flags">${r.voided ? flagVoid : flagPaid + flagOk(r.recorded_by)}</div><p class="rc-sl-by">${r.voided ? `Reason: ${esc(r.void_reason || '')}` : `🔒 Locked · result #${r.seq}`}</p>` : '<p class="rc-sl-empty">Result saved.</p>';
         if (isHost && r && r.voided) act = `<div class="rc-sl-host"><button class="link-btn" data-reopen="${esc(sl.id)}">↺ Re-run Race ${sl.slot_no}</button></div>`;
       }
+      if (ev.status === 'closed' && sl.status !== 'done') { act = ''; if (sl.status === 'open') st = rq.length ? 'Not raced' : 'Not used'; }
       return `<article class="rc-slot s-${sl.status}${sl === nextUp ? ' next' : ''}${isMine(sl) ? ' mine' : ''}${r && r.voided ? ' void' : ''}" id="race-${sl.slot_no}">
         <header><b>Race ${sl.slot_no}</b><span class="rc-sl-st">${st}</span></header>${body}${act}</article>`;
     }).join('') : `<div class="rc-empty">${slotView === 'mine' ? 'You haven\'t joined a race yet — pick an open one.' : slotView === 'up' ? 'Every race is done — the host can add 30 more.' : 'Nothing here yet.'}</div>`;
@@ -322,11 +340,45 @@
     const cur = Auth.user && requests.find(q => q.slot_id === slotId && q.user_id === Auth.user.id);
     $('carBody').innerHTML = `<h2 class="rc-dlg-title">🏁 Join Race ${sl.slot_no}</h2>` + (
       !Auth.user ? `<p class="muted">Sign in with Google to join races.</p>${googleButton('Sign in to join')}`
-      : !mine.length ? `<p class="muted">Register a car first (owner + model). Then pick it here.</p><a class="btn btn-primary btn-block" href="#register" data-close>🏎️ Register a car</a>`
+      : !mine.length ? `<p class="muted">Register your car model first (your owner name comes from Google). Right after, this race opens again so you can join.</p><button type="button" class="btn btn-primary btn-block" data-toreg="${esc(slotId)}">🏎️ Register a car</button>`
       : `<p class="muted small">Pick the car you want to race with. The host picks the final two cars from everyone who asks.</p>
          <div class="rc-feenote">💰 <b>Racing is not free.</b> Each race has an entry fee, paid at the track before the race. Only races approved by the admin count on the leaderboard.</div>
          <div class="rc-joinlist">${mine.map(e => `<button class="rc-mine rc-joinpick${cur && cur.entry_id === e.id ? ' on' : ''}" data-joincar="${esc(e.id)}" data-slot="${esc(slotId)}">${carThumb(e)}<span><b>#${e.number} ${esc(e.car_name)}</b><small>${esc(e.class)}</small></span><span class="bid-flag lead"><i></i>${cur && cur.entry_id === e.id ? 'Joined' : 'Pick'}</span></button>`).join('')}</div>`);
     $('carDlg').showModal();
+  }
+
+  // Owner name = the member's Google name (or the part of the email before @) — set automatically, not typed
+  const ownerName = () => {
+    const u = Auth.user || {}, m = u.user_metadata || {};
+    return ((Auth.profile && Auth.profile.full_name) || m.full_name || m.name || (u.email || '').split('@')[0] || 'Collector').trim().slice(0, 40);
+  };
+  const activeEv = () => events.find(x => x.status !== 'closed');
+  const myActiveCars = () => Auth.user ? entries.filter(e => e.user_id === Auth.user.id && e.status !== 'withdrawn') : [];
+  function goRegister() {
+    const r = $('register'); if (r) r.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => { const f = $('rgCar'); if (f) f.focus({ preventScroll: true }); }, 500);
+    toast('Register your car model first — owner name is filled from your Google account', 'ok');
+  }
+  function goTracker() {
+    if (slots.some(x => x.status === 'open')) { slotView = 'open'; renderTracker(compute()); }
+    $('tracker').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  // Hero "Join a race": sign in → register a car if needed → open races
+  async function joinJump() {
+    if (!ev) return toast(events.length ? 'Pick a race night first' : 'No race night is open yet — watch the WhatsApp community', 'warn');
+    if (ev.status === 'closed') return toast('This race night has finished', 'warn');
+    await ready;
+    if (!Auth.user) { setNext({ tracker: true }); toast('Sign in with Google — you\'ll come right back here', 'ok'); return signIn(location.href.split('#')[0]); }
+    if (!myActiveCars().length) return goRegister();
+    goTracker();
+  }
+  // Back from Google sign-in: carry on with what the member was doing
+  function resumeAfterLogin() {
+    const nx = getNext(); if (!nx || !Auth.user || nx.afterReg) return;
+    setNext(null);
+    if (!myActiveCars().length) { if (nx.slot) setNext({ slot: nx.slot, afterReg: true }); return goRegister(); }
+    if (nx.slot && slots.some(x => x.id === nx.slot && x.status === 'open')) { goTracker(); return openJoin(nx.slot); }
+    goTracker();
   }
 
   // ---------------------------------------------------------------- register + my cars
@@ -335,7 +387,7 @@
     const box = $('regBody');
     if (!ev) { box.innerHTML = '<p class="muted">Pick an event above to register.</p>'; $('myCars').innerHTML = ''; return; }
     if (ev.status === 'closed') box.innerHTML = '<p class="muted">This event has finished. Watch for the next GDX race night on WhatsApp.</p>';
-    else if (!Auth.user) box.innerHTML = `<p class="muted">Sign in with Google and add your car — owner + model name. Your car gets a race number and its own record.</p>${googleButton('Sign in to register')}`;
+    else if (!Auth.user) box.innerHTML = `<p class="muted">Sign in with Google and add your car model — the owner name comes from your Google account automatically. Your car gets a race number and its own record.</p>${googleButton('Sign in to register')}`;
     else if (!box.querySelector('form')) {
       box.innerHTML = `
         <form id="regForm" novalidate>
@@ -345,7 +397,7 @@
           </div>
           <div class="field"><label>Class *</label><div class="chips rc-pick" id="rgClass">${ev.classes.map((c, i) => `<button type="button" class="chip${i === 0 ? ' active' : ''}" data-v="${esc(c)}">${esc(c)}</button>`).join('')}</div></div>
           <div class="two">
-            <div class="field"><label for="rgRacer">Owner name</label><input class="input" id="rgRacer" maxlength="40" placeholder="${esc((Auth.profile && Auth.profile.full_name) || 'Your name')}"></div>
+            <div class="field"><label>Owner</label><div class="rc-owner-auto"><span class="rc-ava">${esc(ownerName().charAt(0).toUpperCase())}</span><span><b>${esc(ownerName())}</b><small>from your Google sign-in · ${esc(Auth.user.email || '')}</small></span></div></div>
             <div class="field"><label for="rgPhone">Mobile *</label><input class="input" id="rgPhone" type="tel" inputmode="numeric" maxlength="14" placeholder="10-digit (only the host sees it)" value="${esc((Auth.profile && Auth.profile.phone) || '')}"></div>
           </div>
           <div class="field"><label class="upload small-upload" id="rgPicBox"><input type="file" id="rgPic" accept="image/*">📷 Add a photo of the car (shows on the big screen)</label></div>
@@ -371,13 +423,15 @@
           const up = await sb.storage.from(BUCKET).upload(path, pic, { contentType: 'image/jpeg' });
           if (up.error) { path = null; toast('Photo didn\'t upload — registering without it', 'warn'); }
         }
-        const { data, error } = await sb.rpc('race_register', { p_event: ev.id, p_racer: $('rgRacer').value.trim(), p_car: car,
+        const { data, error } = await sb.rpc('race_register', { p_event: ev.id, p_racer: ownerName(), p_car: car,
           p_brand: $('rgBrand').value.trim(), p_class: klass, p_phone: phone, p_photo: path });
         btn.disabled = false;
         if (error) return fail(errMsg(error));
         toast(`Registered as #${data.number}! Now join a race in the Race tracker.`, 'ok');
         $('regForm').reset(); pic = null; $('rgPicBox').classList.remove('has-file');
         await refresh();
+        const nx = getNext();
+        if (nx && nx.slot) { setNext(null); if (slots.some(x => x.id === nx.slot && x.status === 'open')) openJoin(nx.slot); else goTracker(); }
       };
     }
     // my cars
@@ -427,6 +481,8 @@
             <button class="btn btn-ghost btn-block">Add walk-in</button>
           </form>` : '<p class="muted small">Pick an event above, or create one.</p>'}
         </div>
+        ${!ev && activeEv() ? `<div class="panel"><h3 class="panel-title">New event</h3><p class="muted">Finish <b>${esc(activeEv().name)}</b> before creating the next event — only one race night runs at a time.</p>
+          <button type="button" class="btn btn-ghost btn-block" data-gotoev="${esc(activeEv().id)}">Go to ${esc(activeEv().name)}</button></div>` : `
         <form class="panel" id="evForm" novalidate>
           <h3 class="panel-title">${ev ? 'Event settings' : 'New event'}</h3>
           <div class="field"><label>Name</label><input class="input" id="eName" value="${esc(ev ? ev.name : 'GDX Drag Night #' + (events.length + 1))}"></div>
@@ -434,11 +490,15 @@
             <div class="field"><label>Venue</label><input class="input" id="eVenue" value="${esc(ev ? ev.venue || '' : '')}"></div></div>
           <div class="field"><label>Classes (comma-separated)</label><input class="input" id="eClasses" value="${esc((ev ? ev.classes : ['Stock mainline', 'Premium / Real Riders', 'Open / Modified']).join(', '))}"></div>
           <div class="field"><label>Prizes</label><input class="input" id="ePrize" placeholder="e.g. Top of the leaderboard wins a trophy" value="${esc(ev ? ev.prize_info || '' : '')}"></div>
-          ${ev ? `<div class="field"><label>Status</label><select class="input" id="eStatus">${['open', 'live', 'closed'].map(s => `<option value="${s}"${ev.status === s ? ' selected' : ''}>${{ open: 'Registration open', live: 'Racing live', closed: 'Finished (locks the event)' }[s]}</option>`).join('')}</select></div>` : ''}
+          ${ev ? `<div class="rc-life">${[['open', '1', 'Registration'], ['live', '2', 'Racing live'], ['closed', '3', 'Finished']].map(([k, n, l]) =>
+              `<span class="${ev.status === k ? 'now' : ['open', 'live', 'closed'].indexOf(k) < ['open', 'live', 'closed'].indexOf(ev.status) ? 'done' : ''}"><i>${n}</i>${l}</span>`).join('<b>→</b>')}</div>
+            ${ev.status === 'open' ? '<button type="button" class="btn btn-primary btn-block" data-evstatus="live">▶ Start event — racing begins</button><p class="muted small">Members can register and join races now. Results can be recorded only after you start the event.</p>'
+              : ev.status === 'live' ? '<button type="button" class="btn btn-ghost btn-block rc-finish" data-evstatus="closed">🏁 Finish event — lock everything</button><p class="muted small">When the last race is done, finish the event. Then you can create the next one.</p>'
+              : '<p class="muted small">🔒 This event is finished — every result is locked for good.</p>'}` : ''}
           <p class="form-error" id="eErr" hidden></p>
           <button class="btn btn-primary btn-block">${ev ? 'Save event' : 'Create event'}</button>
-          ${ev ? '<button type="button" class="link-btn" id="eNew" style="margin-top:8px">+ Create another event</button>' : ''}
-        </form>
+          ${ev ? (activeEv() && activeEv().id !== ev.id ? `<p class="muted small" style="margin-top:8px">Running now: <b>${esc(activeEv().name)}</b></p>` : !activeEv() ? '<button type="button" class="link-btn" id="eNew" style="margin-top:8px">+ Create the next event</button>' : '') : ''}
+        </form>`}
       </div>`;
     wireHost(S);
   }
@@ -456,7 +516,7 @@
       if (error) return toast(errMsg(error), 'warn');
       toast(`Walk-in added as #${data.number}`, 'ok'); refresh();
     };
-    $('evForm').onsubmit = async e => {
+    if ($('evForm')) $('evForm').onsubmit = async e => {
       e.preventDefault();
       const err = $('eErr'); err.hidden = true;
       const row = {
@@ -465,7 +525,6 @@
         prize_info: $('ePrize').value.trim() || null
       };
       if (!row.name || !row.event_date || !row.classes.length) { err.textContent = 'Name, date and at least one class are needed.'; err.hidden = false; return; }
-      if (ev && $('eStatus')) row.status = $('eStatus').value;
       const q = ev ? host.from('race_events').update(row).eq('id', ev.id).select().single() : host.from('race_events').insert(row).select().single();
       const { data, error } = await q;
       if (error) { err.textContent = errMsg(error); err.hidden = false; return; }
@@ -486,8 +545,8 @@
       if (error) return toast(errMsg(error), 'warn');
       toast('Race voided', 'ok'); return refresh();
     }
-    const t = e.target.closest('[data-join],[data-leave],[data-joincar],[data-confirm],[data-slotwin],[data-reopen],[data-addslots],[data-slotview],[data-close]');
-    if (t) return slotAction(t);
+    const t = e.target.closest('[data-evstatus],[data-gotoev],[data-join],[data-leave],[data-joincar],[data-confirm],[data-slotwin],[data-reopen],[data-addslots],[data-slotview],[data-close],[data-toreg],[data-joinjump]');
+    if (t) { if (t.dataset.joinjump !== undefined || t.dataset.toreg) e.preventDefault(); return slotAction(t); }
     const c = e.target.closest('[data-cls]');
     if (c) { cls = c.dataset.cls; renderBoard(compute()); return; }
     const so = e.target.closest('[data-sort]');
@@ -510,11 +569,29 @@
       if (ok) toast(ok, 'ok'); await refresh(); return true;
     };
     if (d.close !== undefined) { $('carDlg').close(); return; }
+    if (d.toreg) { setNext({ slot: d.toreg, afterReg: true }); $('carDlg').close(); goRegister(); return; }
+    if (d.joinjump !== undefined) return joinJump();
     if (d.slotview) { slotView = d.slotview; renderTracker(S); return; }
-    if (d.join) return openJoin(d.join);
+    if (d.join) {
+      if (!Auth.user) { setNext({ slot: d.join }); toast('Sign in with Google to join — you\'ll come right back here', 'ok'); return signIn(location.href.split('#')[0]); }
+      return openJoin(d.join);
+    }
     if (d.joincar) { if (await run('race_slot_join', { p_slot: d.slot, p_entry: d.joincar }, 'You\'re in! The host will confirm the two cars.')) $('carDlg').close(); return; }
     if (d.leave) { if (confirm('Leave this race?')) await run('race_slot_leave', { p_slot: d.leave }, 'You left the race'); return; }
     if (!isHost) return;
+    if (d.gotoev) { params.set('e', d.gotoev); history.replaceState(null, '', 'race.html?' + params); return refresh(); }
+    if (d.evstatus) {
+      const msg = d.evstatus === 'live'
+        ? `Start "${ev.name}"?\n\nRacing goes live — you can record results. Registration and joining races stay open.`
+        : `Finish "${ev.name}"?\n\nEverything is locked for good: no more races, joins or results. Then you can create the next event.`;
+      if (!confirm(msg)) return;
+      t.disabled = true;
+      const { error } = await host.from('race_events').update({ status: d.evstatus }).eq('id', ev.id);
+      t.disabled = false;
+      if (error) return toast(errMsg(error), 'warn');
+      toast(d.evstatus === 'live' ? 'Event started — racing is live 🏁' : 'Event finished — results locked 🔒', 'ok');
+      await loadEvents(); return refresh();
+    }
     if (d.addslots !== undefined) { await run('race_add_slots', { p_event: ev.id, p_count: 30 }, '30 more races added'); return; }
     if (d.confirm) {
       const pk = picks[d.confirm] || {};
@@ -570,8 +647,9 @@
     });
   }
 
-  try { await Promise.all([loadEvents(), checkHost()]); } catch (e) { events = []; }
+  try { await Promise.all([loadEvents(), checkHost(), ready]); } catch (e) { events = events || []; }
   await refresh();
+  resumeAfterLogin();
   // live updates: big screen every 5s, phones every 15s
   setInterval(() => { if (document.visibilityState === 'visible' && !document.querySelector('dialog[open]') && !(document.activeElement && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))) refresh(); }, TV ? 5000 : 15000);
 })();

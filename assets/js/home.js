@@ -44,6 +44,30 @@
     } catch (e) { /* keep the placeholders */ }
   })();
 
+  // Racing tile — latest race night, open races, top car
+  (async () => {
+    try {
+      const ev = await sb.from('race_events').select('id,name,event_date,status').order('event_date', { ascending: false }).order('created_at', { ascending: false }).limit(1);
+      const e = ev.data && ev.data[0]; if (ev.error || !e) return;
+      $('raceEvent').textContent = e.name;
+      $('raceDate').textContent = new Date(e.event_date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) +
+        ' · ' + ({ open: 'registration open', live: 'racing live', closed: 'finished' }[e.status] || '');
+      $('raceLabel').textContent = { open: 'Registration open', live: 'Racing live', closed: 'GDX Racing' }[e.status] || 'GDX Racing';
+      if (e.status === 'live') $('raceDot').classList.add('live');
+      const [sl, rc, en] = await Promise.all([
+        sb.from('race_slots').select('status').eq('event_id', e.id).limit(2000),
+        sb.from('races').select('winner,voided').eq('event_id', e.id).limit(5000),
+        sb.from('race_entries').select('id,car_name,racer_name').eq('event_id', e.id).limit(2000)]);
+      $('raceOpen').textContent = sl.data ? sl.data.filter(x => x.status === 'open').length : '—';
+      const live = (rc.data || []).filter(r => !r.voided);
+      $('raceDone').textContent = live.length;
+      const wins = {}; live.forEach(r => { wins[r.winner] = (wins[r.winner] || 0) + 1; });
+      const top = Object.entries(wins).sort((a, b) => b[1] - a[1])[0];
+      const car = top && (en.data || []).find(x => x.id === top[0]);
+      if (car) $('raceLeader').textContent = `${car.car_name} · ${top[1]} won`;
+    } catch (e) { /* keep the placeholders */ }
+  })();
+
   // Sponsor count
   (async () => {
     try {

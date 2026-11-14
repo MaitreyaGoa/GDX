@@ -285,6 +285,7 @@
             ${link('shop.html', 'Sales', '', SHOP_PAGES.includes(page))}
             ${link('auction.html', 'Auctions')}
             ${link('giveaway.html', 'Giveaways', 'hide-xs')}
+            ${link('race.html', 'Racing', 'hide-md')}
             ${link('partners.html', 'Partners', 'hide-md')}
             <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch dark mode">
               <svg class="i-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M20.2 14.6A8.5 8.5 0 0 1 9.4 3.8a.6.6 0 0 0-.8-.7A9.5 9.5 0 1 0 20.9 15.4a.6.6 0 0 0-.7-.8z"/></svg>
@@ -336,6 +337,7 @@
             <a href="shop.html">Sales — all cars</a>
             <a href="auction.html">Live auctions</a>
             <a href="giveaway.html">Giveaways</a>
+            <a href="race.html">GDX Racing</a>
             <a href="partners.html">Partners &amp; stores</a>
             <a href="partners.html#advertise">Advertise with GDX</a>
           </div>
