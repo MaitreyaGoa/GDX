@@ -343,6 +343,7 @@
             <a href="giveaway.html">Giveaways</a>
             <a href="race.html">GDX Racing</a>
             <a href="partners.html">Partners &amp; stores</a>
+            <a href="#" data-install-app>📲 Install the GDX app</a>
             <a href="partners.html#advertise">Advertise with GDX</a>
           </div>
           <div class="footer-col">
@@ -497,6 +498,45 @@
   initTheme();
   document.addEventListener('DOMContentLoaded', () => { outbidDot(); setInterval(() => { if (document.visibilityState === 'visible') outbidDot(); }, 30000); });
   document.addEventListener('DOMContentLoaded', () => { addScene(); renderChrome(); fillLogos(); enableTilt(); applyTheme(currentTheme(), false); updateAccountButton(); });
+
+  // ---------------------------------------------------------------- PWA: installable app + offline
+  const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let installEvt = null;
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname))) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  }
+  const INSTALL_SNOOZE = 'gdx-install-snooze';
+  const snoozed = () => { try { return Date.now() < +(localStorage.getItem(INSTALL_SNOOZE) || 0); } catch (e) { return false; } };
+  function installBar(html) {
+    if (isStandalone() || snoozed() || document.getElementById('gxInstall') || document.documentElement.classList.contains('tv')) return;
+    const bar = document.createElement('div');
+    bar.id = 'gxInstall'; bar.className = 'gx-install'; bar.setAttribute('role', 'dialog'); bar.setAttribute('aria-label', 'Install the GDX app');
+    bar.innerHTML = `<img src="assets/img/icon-192.png" alt="" width="44" height="44"><div class="gx-install-txt">${html}</div>
+      <button type="button" class="gx-install-x" aria-label="Not now">✕</button>`;
+    document.body.appendChild(bar);
+    bar.querySelector('.gx-install-x').onclick = () => { try { localStorage.setItem(INSTALL_SNOOZE, Date.now() + 14 * 864e5); } catch (e) {} bar.remove(); };
+    const go = bar.querySelector('[data-install-go]'); if (go) go.onclick = () => installApp();
+  }
+  async function installApp() {
+    if (isStandalone()) return toast('GDX is already installed on this device ✓', 'ok');
+    if (installEvt) {
+      installEvt.prompt();
+      const { outcome } = await installEvt.userChoice; installEvt = null;
+      const b = document.getElementById('gxInstall'); if (b) b.remove();
+      if (outcome === 'accepted') toast('GDX app installed — find it on your home screen 🎉', 'ok');
+      return;
+    }
+    if (isIOS) return toast('On iPhone: tap the Share button ⬆️ in Safari, then "Add to Home Screen".', 'ok');
+    toast('Open your browser menu (⋮) and choose "Install app" or "Add to Home screen".', 'ok');
+  }
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); installEvt = e;
+    setTimeout(() => installBar('<b>Get the GDX app</b><small>Home-screen icon, full screen, quick to open.</small><button type="button" class="btn btn-primary gx-install-go" data-install-go>Install</button>'), 2500);
+  });
+  window.addEventListener('appinstalled', () => { installEvt = null; const b = document.getElementById('gxInstall'); if (b) b.remove(); });
+  if (isIOS && !isStandalone()) setTimeout(() => installBar('<b>Add GDX to your Home Screen</b><small>In Safari tap <span class="gx-share">⬆️ Share</span> → <b>Add to Home Screen</b>.</small>'), 4000);
+  document.addEventListener('click', e => { const a = e.target.closest('[data-install-app]'); if (a) { e.preventDefault(); installApp(); } });
 
   window.MHC = { C, sb, store, money, esc, param, isGoa, placeholder, cover, Cart,
                  Auth, ready, signIn, signOut, googleButton,
