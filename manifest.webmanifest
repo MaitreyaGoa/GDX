@@ -1,14 +1,26 @@
 {
+  "id": "/",
   "name": "GDX — Goa Diecast Exchange",
   "short_name": "GDX",
-  "description": "Goa's diecast community — buy, sell, auction and win.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "description": "Goa's diecast community — buy, sell, auction, race and win.",
+  "lang": "en-IN",
+  "start_url": "/index.html?source=app",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#050604",
   "theme_color": "#050604",
+  "categories": ["shopping", "social", "entertainment"],
   "icons": [
-    { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    { "src": "/assets/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/img/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/assets/img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Sales", "short_name": "Sales", "url": "/shop.html?source=app", "icons": [{ "src": "/assets/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Auctions", "short_name": "Auctions", "url": "/auction.html?source=app", "icons": [{ "src": "/assets/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "GDX Racing", "short_name": "Racing", "url": "/race.html?source=app", "icons": [{ "src": "/assets/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Giveaways", "short_name": "Giveaways", "url": "/giveaway.html?source=app", "icons": [{ "src": "/assets/img/icon-192.png", "sizes": "192x192" }] }
   ]
 }

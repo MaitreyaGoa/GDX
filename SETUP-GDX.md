@@ -58,3 +58,12 @@ Open `gdxgarage.com/status.html` → every line should be ✅, including **GDX c
 - Same-day pick & drop only appears for Goa pincodes (403…); the database also blocks it for other pincodes.
 - Order codes now start with `GDX-`.
 - Review `privacy.html` and `terms.html` wording before launch — I'm not a lawyer.
+
+## GDX app (PWA)
+gdxgarage.com installs like an app: home-screen icon, full screen, no app store.
+- **Android / Chrome / Edge:** an "Install" bar appears after a few seconds (or footer → 📲 Install the GDX app).
+- **iPhone (Safari):** Share ⬆️ → **Add to Home Screen** (the site shows this tip once).
+- Long-press the icon on Android for shortcuts: Sales, Auctions, Racing, Giveaways.
+- Offline: pages already opened still work; live data (bids, races, logins) always needs internet and is never cached.
+- Files: `manifest.webmanifest`, `sw.js`, `offline.html`, `assets/img/icon-maskable-*.png`.
+- **After uploading a site update**, change `VERSION = 'gdx-v1'` in `sw.js` (to `gdx-v2`, …) so phones clear old saved files. Pages, CSS and JS always load fresh when online anyway.
