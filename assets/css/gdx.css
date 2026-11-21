@@ -894,3 +894,18 @@ html.tv .rc-stat-wide { display: none; }
 .rc-life span.now { background: var(--lime); color: #0B0D07; } .rc-life span.now i { background: rgba(0,0,0,.15); }
 .rc-finish { border-color: rgba(239,68,68,.5) !important; color: #DC2626 !important; }
 .rc-evnote { padding: 10px 14px; border-radius: 14px; margin: 0 0 12px; font-size: 13.5px; background: rgba(59,130,246,.10); box-shadow: 0 0 0 1px rgba(59,130,246,.35) inset; }
+
+/* PWA install bar */
+.gx-install { position: fixed; z-index: 90; left: 50%; transform: translateX(-50%); bottom: max(14px, env(safe-area-inset-bottom));
+  width: min(520px, calc(100% - 24px)); display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center;
+  padding: 10px 10px 10px 12px; border-radius: 20px; background: rgba(12, 15, 9, .92); color: #eef2e6;
+  box-shadow: 0 0 0 1px rgba(184,242,25,.35), 0 18px 50px rgba(0,0,0,.45); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  animation: gxUp .35s ease-out; }
+@keyframes gxUp { from { opacity: 0; transform: translate(-50%, 20px); } }
+.gx-install img { border-radius: 12px; }
+.gx-install-txt { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-items: center; min-width: 0; font-size: 14px; }
+.gx-install-txt b { grid-column: 1; } .gx-install-txt small { grid-column: 1; color: #a9b39a; font-size: 12.5px; line-height: 1.35; }
+.gx-install-go { grid-column: 2; grid-row: 1 / span 2; padding: 9px 16px; min-height: 0; }
+.gx-install-x { border: 0; background: rgba(255,255,255,.08); color: inherit; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 13px; }
+.gx-share { white-space: nowrap; font-weight: 700; color: #B8F219; }
+@media (display-mode: standalone) { .gx-install { display: none; } }
